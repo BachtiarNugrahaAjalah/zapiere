@@ -1,88 +1,42 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zapiere - Dashboard Pembeli</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: '#0a0a0a',
-                        primary: '#011C27',
-                        muted: '#545677',
-                        accent: '#EB9FEF',
-                        soft: '#FECEE9'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        html { scroll-behavior: smooth; }
-        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-</head>
-<body class="bg-gray-100 text-dark font-sans antialiased min-h-screen flex flex-col relative">
+<?php
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../components/layout.php';
+require_once __DIR__ . '/../../models/UserModel.php';
+require_once __DIR__ . '/../../models/ProductModel.php';
 
-    <nav class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center gap-4">
-                <div class="flex items-center gap-2 flex-shrink-0 cursor-pointer">
-                    <div class="bg-primary text-white p-1.5 rounded-lg">
-                        <i class="ph-fill ph-storefront text-xl"></i>
-                    </div>
-                    <span class="font-extrabold text-xl text-primary tracking-tight hidden sm:block">Zapiere</span>
-                </div>
+$user = current_user('pembeli');
+if (!$user || $user['id_user'] == 0) {
+    header("Location: " . url_for('login.php'));
+    exit;
+}
 
-                <div class="flex-grow max-w-2xl hidden md:flex">
-                    <div class="relative w-full">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="ph ph-magnifying-glass text-muted text-lg"></i>
-                        </div>
-                        <input type="text" id="search-input" oninput="handleSearch()" class="block w-full pl-11 pr-4 py-2.5 bg-gray-100 border-transparent rounded-full text-sm placeholder-gray-400 focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary transition-colors" placeholder="Mau cari barang elektronik apa hari ini?">
-                    </div>
-                </div>
+$dbKategori = db_all("SELECT * FROM kategori");
+$dbProduk = products_with_meta(null); // Fetch all products
+zapiere_page_start('Dashboard Pembeli', 'pembeli', 'dashboard', 'Temukan elektronik berkualitas di sekitarmu!');
+?>
+<!-- Inject Phosphor Icons inside body -->
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 
-                <div class="flex items-center gap-5 flex-shrink-0">
-                    <div class="flex items-center gap-3 cursor-pointer group">
-                        <div id="user-avatar" class="h-9 w-9 rounded-full bg-soft text-primary flex items-center justify-center font-bold border border-accent/50 group-hover:bg-accent transition-colors">
-                        </div>
-                        <div class="hidden lg:flex flex-col">
-                            <span id="user-name" class="font-bold text-sm text-dark leading-none mb-1">Loading...</span>
-                            <span id="user-role" class="text-[10px] text-muted leading-none capitalize">Role</span>
-                        </div>
-                        <i class="ph ph-sign-out text-muted hover:text-red-500 ml-2 hidden lg:block" title="Keluar"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div class="bg-gradient-to-r from-accent/60 to-soft/90 rounded-3xl p-8 sm:p-12 mb-10 flex items-center justify-between relative overflow-hidden border border-accent/20">
+<div class="space-y-6">
+        <div class="bg-gradient-to-r from-zPink/60 to-zBlush/90 rounded-3xl p-8 sm:p-12 mb-10 flex items-center justify-between relative overflow-hidden border border-zPink/20">
             <div class="absolute -right-20 -top-20 w-64 h-64 bg-white/30 rounded-full blur-3xl"></div>
             <div class="absolute right-10 bottom-0 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
             
             <div class="max-w-xl relative z-10">
-                <div class="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary mb-4 border border-white/40">
+                <div class="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-zDark mb-4 border border-white/40">
                     <i class="ph-fill ph-lightning"></i> Belanja Praktis & Cepat
                 </div>
-                <h1 class="text-3xl sm:text-4xl font-extrabold text-primary mb-4 leading-tight">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-zDark mb-4 leading-tight">
                     Temukan elektronik berkualitas di sekitarmu!
                 </h1>
-                <p class="text-primary/80 mb-6 text-sm sm:text-base leading-relaxed font-medium">
+                <p class="text-zDark/80 mb-6 text-sm sm:text-base leading-relaxed font-medium">
                     Belanja hemat, transaksi aman, pengiriman cepat — semua ada di Zapiere, marketplace elektronik andalan warga Medan.
                 </p>
-                <button class="bg-primary hover:bg-opacity-90 text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-colors shadow-lg shadow-primary/20">
+                <button class="bg-zDark hover:bg-opacity-90 text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-colors shadow-lg shadow-zDark/20">
                     Pelajari Lebih Lanjut &rarr;
                 </button>
             </div>
@@ -95,8 +49,8 @@
         </div>
 
         <div class="mb-2">
-            <div class="flex items-center gap-2 mb-4 border-l-4 border-primary pl-2">
-                <h3 class="font-bold text-primary text-lg">Kategori Pilihan</h3>
+            <div class="flex items-center gap-2 mb-4 border-l-4 border-zDark pl-2">
+                <h3 class="font-bold text-zDark text-lg">Kategori Pilihan</h3>
             </div>
         </div>
         <div class="mb-10 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -106,62 +60,65 @@
 
         <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-                <h2 class="text-2xl font-extrabold text-primary flex items-center gap-2 tracking-tight">
+                <h2 class="text-2xl font-extrabold text-zDark flex items-center gap-2 tracking-tight">
                     <i class="ph-fill ph-fire text-orange-500"></i> Temukan Elektronik Impianmu
                 </h2>
-                <p class="text-muted text-sm mt-1.5">Pilih produk terbaik dan checkout dengan cepat.</p>
+                <p class="text-zSlate text-sm mt-1.5">Pilih produk terbaik dan checkout dengan cepat.</p>
             </div>
-            <button class="text-sm font-semibold text-primary bg-soft/50 hover:bg-soft px-4 py-2 rounded-full transition-colors flex items-center gap-2 self-start sm:self-auto border border-accent/30">
-                <i class="ph ph-funnel"></i> Filter
-            </button>
+            <div class="relative w-full sm:w-72">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <i class="ph ph-magnifying-glass text-zSlate text-lg"></i>
+                </div>
+                <input type="text" id="search-input" oninput="handleSearch()" class="block w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-full text-sm placeholder-gray-400 focus:border-zPink focus:ring-1 focus:ring-zPink transition-colors shadow-sm focus:outline-none" placeholder="Cari barang elektronik...">
+            </div>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5" id="product-container">
         </div>
 
-    </main>
+    </div>
 
-    <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-dark/60 backdrop-blur-sm flex justify-center items-center p-4 transition-all opacity-0">
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-[#0a0a0a]/60 backdrop-blur-sm flex justify-center items-center p-4 transition-all opacity-0">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-all flex flex-col max-h-[90vh]" id="detail-modal-content">
             <div class="relative h-64 bg-white flex-shrink-0 flex justify-center items-center overflow-hidden">
-                <img id="modal-img" src="../assets/images/image.png" alt="Foto Produk" class="w-full h-full object-contain p-4">
-                <button onclick="closeModal('detail-modal')" class="absolute top-4 right-4 bg-white/80 backdrop-blur rounded-full p-2 text-primary hover:bg-soft transition-all shadow-sm">
+                <img id="modal-img" src="../../assets/images/image.png" alt="Foto Produk" class="w-full h-full object-contain p-4">
+                <button onclick="closeModal('detail-modal')" class="absolute top-4 right-4 bg-white/80 backdrop-blur rounded-full p-2 text-zDark hover:bg-zBlush transition-all shadow-sm">
                     <i class="ph ph-x font-bold"></i>
                 </button>
             </div>
             
             <div class="p-6 overflow-y-auto no-scrollbar flex-grow">
-                <span id="modal-category" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-soft text-primary mb-3">Kategori</span>
-                <h2 id="modal-title" class="text-xl sm:text-2xl font-bold text-primary mb-2 leading-tight">Nama Produk</h2>
-                <p id="modal-price" class="text-2xl font-extrabold text-primary mb-4">Rp 0</p>
+                <span id="modal-category" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-zBlush text-zDark mb-3">Kategori</span>
+                <h2 id="modal-title" class="text-xl sm:text-2xl font-bold text-zDark mb-2 leading-tight">Nama Produk</h2>
+                <p id="modal-price" class="text-2xl font-extrabold text-zDark mb-4">Rp 0</p>
                 
                 <div class="flex items-center gap-4 mb-5 pb-5 border-b border-gray-100">
-                    <div class="flex items-center gap-1.5 text-sm text-muted">
-                        <i class="ph-fill ph-package text-primary"></i>
-                        Stok: <span id="modal-stock" class="font-bold text-primary">0</span>
+                    <div class="flex items-center gap-1.5 text-sm text-zSlate">
+                        <i class="ph-fill ph-package text-zDark"></i>
+                        Stok: <span id="modal-stock" class="font-bold text-zDark">0</span>
                     </div>
                     <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
-                    <div class="flex items-center gap-1.5 text-sm text-muted">
-                        <i class="ph-fill ph-storefront text-primary"></i>
-                        <span id="modal-seller" class="font-medium text-primary">Nama Toko</span>
+                    <div class="flex items-center gap-1.5 text-sm text-zSlate">
+                        <i class="ph-fill ph-storefront text-zDark"></i>
+                        <span id="modal-seller" class="font-medium text-zDark">Nama Toko</span>
                     </div>
                 </div>
 
                 <div class="mb-6">
-                    <h4 class="text-sm font-bold text-primary mb-2 flex items-center gap-2">
+                    <h4 class="text-sm font-bold text-zDark mb-2 flex items-center gap-2">
                         <i class="ph ph-info"></i> Deskripsi Produk
                     </h4>
-                    <p id="modal-desc" class="text-sm text-muted leading-relaxed"></p>
+                    <p id="modal-desc" class="text-sm text-zSlate leading-relaxed"></p>
                 </div>
 
                 <div class="flex flex-col sm:flex-row items-center gap-4 mt-auto pt-2">
                     <div class="flex items-center justify-between border border-gray-300 rounded-xl w-32 overflow-hidden bg-white shadow-sm flex-shrink-0">
-                        <button onclick="updateQty(-1)" class="w-10 h-10 flex items-center justify-center text-muted hover:text-primary hover:bg-soft transition-colors font-bold text-lg">-</button>
-                        <input type="number" id="modal-qty" value="1" min="1" class="w-10 text-center bg-transparent text-primary font-bold focus:outline-none pointer-events-none" readonly>
-                        <button onclick="updateQty(1)" class="w-10 h-10 flex items-center justify-center text-muted hover:text-primary hover:bg-soft transition-colors font-bold text-lg">+</button>
+                        <button onclick="updateQty(-1)" class="w-10 h-10 flex items-center justify-center text-zSlate hover:text-zDark hover:bg-zBlush transition-colors font-bold text-lg">-</button>
+                        <input type="number" id="modal-qty" value="1" min="1" class="w-10 text-center bg-transparent text-zDark font-bold focus:outline-none pointer-events-none" readonly>
+                        <button onclick="updateQty(1)" class="w-10 h-10 flex items-center justify-center text-zSlate hover:text-zDark hover:bg-zBlush transition-colors font-bold text-lg">+</button>
                     </div>
                     
-                    <button id="btn-add-cart" class="w-full bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                    <button id="btn-add-cart" class="w-full bg-zDark hover:bg-opacity-90 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-zDark/20">
                         <i class="ph-bold ph-shopping-cart-simple text-lg"></i>
                         Keranjang
                     </button>
@@ -170,18 +127,18 @@
         </div>
     </div>
 
-    <button id="floating-cart" onclick="openCheckoutModal()" class="fixed bottom-6 right-6 bg-accent text-primary hover:bg-primary hover:text-white shadow-2xl rounded-full p-4 flex items-center justify-center transition-all transform translate-y-24 opacity-0 z-40 group border-2 border-white">
+    <button id="floating-cart" onclick="openCheckoutModal()" class="fixed bottom-6 right-6 bg-zPink text-zDark hover:bg-zDark hover:text-white shadow-2xl rounded-full p-4 flex items-center justify-center transition-all transform translate-y-24 opacity-0 z-40 group border-2 border-white">
         <i class="ph-fill ph-shopping-bag text-3xl transition-transform group-hover:scale-110"></i>
-        <span id="cart-badge" class="absolute -top-2 -right-2 bg-primary text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">0</span>
+        <span id="cart-badge" class="absolute -top-2 -right-2 bg-zDark text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">0</span>
     </button>
 
-    <div id="checkout-modal" class="fixed inset-0 z-50 hidden bg-dark/60 backdrop-blur-sm flex justify-center items-center p-4 transition-all opacity-0">
+    <div id="checkout-modal" class="fixed inset-0 z-50 hidden bg-[#0a0a0a]/60 backdrop-blur-sm flex justify-center items-center p-4 transition-all opacity-0">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-all flex flex-col" id="checkout-modal-content">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-white">
-                <h2 class="text-lg font-bold text-primary flex items-center gap-2">
-                    <i class="ph-fill ph-shopping-cart text-primary text-xl"></i> Checkout
+                <h2 class="text-lg font-bold text-zDark flex items-center gap-2">
+                    <i class="ph-fill ph-shopping-cart text-zDark text-xl"></i> Checkout
                 </h2>
-                <button onclick="closeModal('checkout-modal')" class="text-muted hover:text-red-500 bg-gray-50 p-1.5 rounded-full transition-colors">
+                <button onclick="closeModal('checkout-modal')" class="text-zSlate hover:text-red-500 bg-gray-50 p-1.5 rounded-full transition-colors">
                     <i class="ph ph-x text-lg font-bold"></i>
                 </button>
             </div>
@@ -191,10 +148,10 @@
 
             <div class="p-6 bg-white border-t border-gray-100">
                 <div class="flex justify-between items-end mb-5">
-                    <span class="text-muted text-sm font-medium">Total Pembayaran</span>
-                    <span id="checkout-total" class="text-2xl font-extrabold text-primary leading-none">Rp 0</span>
+                    <span class="text-zSlate text-sm font-medium">Total Pembayaran</span>
+                    <span id="checkout-total" class="text-2xl font-extrabold text-zDark leading-none">Rp 0</span>
                 </div>
-                <button onclick="processCheckout()" class="w-full bg-primary hover:bg-opacity-90 text-white font-bold py-3.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                <button onclick="processCheckout()" class="w-full bg-zDark hover:bg-opacity-90 text-white font-bold py-3.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-zDark/20">
                     <i class="ph-bold ph-check-circle text-lg"></i>
                     Konfirmasi Checkout
                 </button>
@@ -206,60 +163,37 @@
         <div class="bg-white border-l-4 border-green-500 shadow-xl rounded-r-xl p-4 flex items-start gap-3 w-80">
             <i class="ph-fill ph-check-circle text-green-500 text-xl mt-0.5"></i>
             <div>
-                <h4 class="font-bold text-dark text-sm" id="toast-title">Berhasil!</h4>
-                <p class="text-xs text-muted mt-1 leading-relaxed" id="toast-message">Pesan notifikasi disini.</p>
+                <h4 class="font-bold text-[#0a0a0a] text-sm" id="toast-title">Berhasil!</h4>
+                <p class="text-xs text-zSlate mt-1 leading-relaxed" id="toast-message">Pesan notifikasi disini.</p>
             </div>
         </div>
     </div>
 
     <script>
-        const dbUsers = [
-            { id_user: 1, username: 'admin_zapiere', nama: 'Admin Zapiere', role: 'admin', saldo: 0 },
-            { id_user: 2, username: 'toko_komputer', nama: 'Toko Komputer Jaya', role: 'penjual', saldo: 5000000 },
-            { id_user: 3, username: 'toko_gadget', nama: 'Gadget Murah', role: 'penjual', saldo: 2000000 },
-            { id_user: 4, username: 'abdul_buyer', nama: 'Abdul', role: 'pembeli', saldo: 15000000 },
-            { id_user: 5, username: 'budi_buyer', nama: 'Budi Santoso', role: 'pembeli', saldo: 500000 }
-        ];
-
-        const dbKategori = [
-            { id_kategori: 1, nama: 'Komputer & Laptop', icon: 'ph-laptop' },
-            { id_kategori: 2, nama: 'Handphone & Tablet', icon: 'ph-device-mobile' },
-            { id_kategori: 3, nama: 'Aksesoris & Periferal', icon: 'ph-headphones' },
-            { id_kategori: 4, nama: 'Kamera & Fotografi', icon: 'ph-camera' },
-            { id_kategori: 5, nama: 'Peralatan Rumah Tangga', icon: 'ph-plug' }
-        ];
-
-        const dbProduk = [
-            { id_produk: 1, id_user: 2, nama: 'Laptop Asus ROG Strix', harga: 15000000, stok: 10, id_kategori: 1, deskripsi: 'Laptop gaming Asus ROG Strix. Pemakaian mulus no minus. Spesifikasi gahar.' },
-            { id_produk: 2, id_user: 2, nama: 'Mouse Wireless Logitech G304', harga: 450000, stok: 50, id_kategori: 3, deskripsi: 'Mouse gaming wireless dengan sensor HERO. Kecepatan respons 1ms. Garansi resmi.' },
-            { id_produk: 3, id_user: 3, nama: 'iPhone 15 Pro Max', harga: 20000000, stok: 5, id_kategori: 2, deskripsi: 'iPhone 15 Pro Max kapasitas 256GB. Ex garansi iBox, Battery Health aman.' },
-            { id_produk: 4, id_user: 3, nama: 'TWS Soundcore R50i', harga: 200000, stok: 100, id_kategori: 3, deskripsi: 'Earphone bluetooth TWS dari Anker. Bass mantap, daya tahan hingga 30 jam.' },
-            { id_produk: 5, id_user: 2, nama: 'Monitor LG 24 Inch IPS', harga: 1500000, stok: 15, id_kategori: 1, deskripsi: 'Monitor LG 24 inch panel IPS. Layar jernih, warna akurat cocok untuk desain.' }
-        ];
-
-        const loggedInUser = dbUsers.find(u => u.id_user === 4);
+        const loggedInUser = <?= json_encode($user) ?>;
+        const dbKategori = <?= json_encode($dbKategori) ?>;
+        
+        const products = <?= json_encode($dbProduk) ?>.map(p => ({
+            id: parseInt(p.id_produk),
+            nama: p.nama,
+            harga: parseFloat(p.harga),
+            stok: parseInt(p.stok),
+            kategori_id: parseInt(p.id_kategori),
+            kategori: p.kategori || 'Uncategorized',
+            toko: p.penjual || 'Toko',
+            lokasi: 'Medan',
+            deskripsi: p.nama, 
+            foto_barang: p.foto_barang || 'image.png'
+        }));
 
         const categories = [
             { id: 'Semua', name: 'Semua', icon: 'ph-squares-four' },
-            ...dbKategori.map(k => ({ id: k.id_kategori, name: k.nama, icon: k.icon }))
+            ...dbKategori.map(k => ({ 
+                id: k.id_kategori, 
+                name: k.nama, 
+                icon: k.icon || 'ph-tag' 
+            }))
         ];
-
-        const products = dbProduk.map(p => {
-            const kategoriObj = dbKategori.find(k => k.id_kategori === p.id_kategori);
-            const penjualObj = dbUsers.find(u => u.id_user === p.id_user);
-            
-            return {
-                id: p.id_produk,
-                nama: p.nama,
-                harga: p.harga,
-                stok: p.stok,
-                kategori_id: p.id_kategori,
-                kategori: kategoriObj ? kategoriObj.nama : 'Uncategorized',
-                toko: penjualObj ? penjualObj.nama : 'Toko Tidak Dikenal',
-                lokasi: 'Medan',
-                deskripsi: p.deskripsi
-            };
-        });
 
         let activeCategory = 'Semua';
         let searchQuery = '';
@@ -270,11 +204,6 @@
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
         };
 
-        function renderUser() {
-            document.getElementById('user-name').innerText = loggedInUser.nama;
-            document.getElementById('user-role').innerText = loggedInUser.role;
-            document.getElementById('user-avatar').innerText = loggedInUser.nama.charAt(0).toUpperCase();
-        }
 
         function renderCategories() {
             const container = document.getElementById('category-container');
@@ -282,8 +211,8 @@
                 <button onclick="setCategory('${cat.id}')" 
                     class="w-[85px] h-[90px] sm:w-[95px] sm:h-[100px] flex flex-col items-center justify-center gap-2 rounded-2xl border transition-all duration-300 flex-shrink-0
                     ${activeCategory == cat.id 
-                        ? 'bg-soft/40 border-primary text-primary shadow-sm' 
-                        : 'bg-white border-gray-200 text-muted hover:border-accent hover:text-primary hover:bg-gray-50 hover:shadow-sm'}">
+                        ? 'bg-zBlush/40 border-zDark text-zDark shadow-sm' 
+                        : 'bg-white border-gray-200 text-zSlate hover:border-zPink hover:text-zDark hover:bg-gray-50 hover:shadow-sm'}">
                     <i class="ph-light ${cat.icon} text-3xl sm:text-4xl mb-0.5"></i>
                     <span class="text-[10px] sm:text-xs font-semibold text-center leading-tight tracking-wide">${cat.name}</span>
                 </button>
@@ -311,7 +240,7 @@
             });
 
             if(filteredProducts.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-16 text-center text-muted">
+                container.innerHTML = `<div class="col-span-full py-16 text-center text-zSlate">
                     <i class="ph-light ph-package text-5xl mb-3 text-gray-300"></i>
                     <p>Tidak ada produk yang sesuai dengan pencarian atau kategori ini.</p>
                 </div>`;
@@ -319,14 +248,14 @@
             }
 
             container.innerHTML = filteredProducts.map(p => `
-                <div class="bg-white rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group cursor-pointer border border-gray-100 flex flex-col h-full transform hover:-translate-y-1 shadow-sm" onclick="openDetail(${p.id})">
+                <div class="bg-white rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-zDark/5 transition-all duration-300 group cursor-pointer border border-gray-100 flex flex-col h-full transform hover:-translate-y-1 shadow-sm" onclick="openDetail(${p.id})">
                     <div class="h-44 bg-white flex items-center justify-center relative overflow-hidden">
                         <img src="../assets/images/image.png" alt="${p.nama}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                     </div>
                     <div class="p-4 flex flex-col flex-grow bg-white">
-                        <span class="text-[10px] font-bold text-primary/70 uppercase tracking-widest mb-1.5 truncate">${p.kategori}</span>
-                        <h3 class="font-bold text-dark text-[15px] mb-2 line-clamp-2 leading-snug">${p.nama}</h3>
-                        <p class="font-extrabold text-primary text-[17px] mt-auto">${formatRupiah(p.harga)}</p>
+                        <span class="text-[10px] font-bold text-zDark/70 uppercase tracking-widest mb-1.5 truncate">${p.kategori}</span>
+                        <h3 class="font-bold text-[#0a0a0a] text-[15px] mb-2 line-clamp-2 leading-snug">${p.nama}</h3>
+                        <p class="font-extrabold text-zDark text-[17px] mt-auto">${formatRupiah(p.harga)}</p>
                     </div>
                 </div>
             `).join('');
@@ -406,10 +335,10 @@
                         <img src="../assets/images/image.png" alt="${item.product.nama}" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-grow flex flex-col justify-center">
-                        <h4 class="font-bold text-dark text-sm line-clamp-1 mb-1">${item.product.nama}</h4>
+                        <h4 class="font-bold text-[#0a0a0a] text-sm line-clamp-1 mb-1">${item.product.nama}</h4>
                         <div class="flex justify-between items-center mt-auto">
-                            <p class="text-xs text-muted font-medium">${item.qty} Barang</p>
-                            <p class="text-sm font-bold text-primary">${formatRupiah(item.product.harga * item.qty)}</p>
+                            <p class="text-xs text-zSlate font-medium">${item.qty} Barang</p>
+                            <p class="text-sm font-bold text-zDark">${formatRupiah(item.product.harga * item.qty)}</p>
                         </div>
                     </div>
                     <button onclick="removeFromCart(${index})" class="self-center text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
@@ -444,10 +373,10 @@
                         <img src="../assets/images/image.png" alt="${item.product.nama}" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-grow flex flex-col justify-center">
-                        <h4 class="font-bold text-dark text-sm line-clamp-1 mb-1">${item.product.nama}</h4>
+                        <h4 class="font-bold text-[#0a0a0a] text-sm line-clamp-1 mb-1">${item.product.nama}</h4>
                         <div class="flex justify-between items-center mt-auto">
-                            <p class="text-xs text-muted font-medium">${item.qty} Barang</p>
-                            <p class="text-sm font-bold text-primary">${formatRupiah(item.product.harga * item.qty)}</p>
+                            <p class="text-xs text-zSlate font-medium">${item.qty} Barang</p>
+                            <p class="text-sm font-bold text-zDark">${formatRupiah(item.product.harga * item.qty)}</p>
                         </div>
                     </div>
                     <button onclick="removeFromCart(${index})" class="self-center text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
@@ -460,22 +389,48 @@
             document.getElementById('checkout-total').innerText = formatRupiah(total);
         }
 
-        function processCheckout() {
-            const btn = document.querySelector('#checkout-modal .bg-primary');
+        async function processCheckout() {
+            const btn = document.querySelector('#checkout-modal .bg-zDark');
             const originalText = btn.innerHTML;
             btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> Memproses...`;
             btn.classList.add('opacity-80', 'cursor-not-allowed');
 
-            setTimeout(() => {
-                cart = []; 
-                updateCartUI();
-                closeModal('checkout-modal');
+            try {
+                // Siapkan data pesanan dari keranjang
+                const payload = {
+                    cart: cart.map(item => ({
+                        id_produk: item.product.id,
+                        jumlah: item.qty
+                    }))
+                };
+
+                // Kirim request ke backend
+                const response = await fetch('checkout.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
                 
-                showToast('Transaksi Berhasil!', 'Checkout sukses, data tersimpan melalui transaksi.', true);
+                const result = await response.json();
                 
+                if (result.success) {
+                    cart = []; 
+                    updateCartUI();
+                    closeModal('checkout-modal');
+                    
+                    showToast('Transaksi Berhasil!', result.message, true);
+                    
+                    // Reload halaman setelah 1.5 detik untuk memperbarui stok barang yang ditampilkan
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('Gagal Checkout', result.message, false);
+                }
+            } catch (err) {
+                showToast('Kesalahan Jaringan', 'Gagal memproses pesanan ke server.', false);
+            } finally {
                 btn.innerHTML = originalText;
                 btn.classList.remove('opacity-80', 'cursor-not-allowed');
-            }, 1200);
+            }
         }
 
         function showModal(modalId, contentId) {
@@ -545,10 +500,8 @@
             }, 3500);
         }
 
-        renderUser();
         renderCategories();
         renderProducts();
 
     </script>
-</body>
-</html>
+<?php zapiere_page_end(); ?>
