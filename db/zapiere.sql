@@ -382,6 +382,20 @@ END
 $$
 DELIMITER ;
 
+--
+-- Triggers `pesanan`
+--
+DELIMITER $$
+CREATE TRIGGER `insert_pesanan` AFTER INSERT ON `pesanan` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Melakukan Pembelian Produk. ID Pesanan: ', NEW.id_pesanan),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -643,6 +657,40 @@ INSERT INTO `ringkasan_produk` (`nama_produk`, `kategori`, `harga`, `stok`) VALU
 ('AC Daikin Standard 1/2 PK', 'Peralatan Rumah Tangga', 3400000, 10),
 ('Kulkas Sharp 2 Pintu Inverter', 'Peralatan Rumah Tangga', 3800000, 8),
 ('Mesin Cuci LG Front Load 8kg', 'Peralatan Rumah Tangga', 5100000, 5);
+
+--
+-- Triggers `produk`
+--
+DELIMITER $$
+CREATE TRIGGER `delete_produk` AFTER DELETE ON `produk` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Menghapus Produk: ', OLD.nama),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `insert_produk` AFTER INSERT ON `produk` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Menambahkan Produk Baru: ', NEW.nama),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `update_produk` AFTER UPDATE ON `produk` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Memperbarui Informasi Produk: ', NEW.nama),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 

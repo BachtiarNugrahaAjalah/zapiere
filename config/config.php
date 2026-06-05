@@ -8,6 +8,7 @@ $username = "root";
 $password = "";
 $database = "zapiere";
 
+/** @var \mysqli $conn */
 $conn = null;
 
 if (function_exists('mysqli_connect')) {

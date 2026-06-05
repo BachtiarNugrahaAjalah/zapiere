@@ -118,4 +118,4 @@ function get_produk_kamera(): array
 function get_produk_prt(): array
 {
     return db_all("SELECT * FROM produk_prt ORDER BY nama");
-}
+}
