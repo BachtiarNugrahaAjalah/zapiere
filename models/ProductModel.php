@@ -89,3 +89,17 @@ function edit_product($id_produk, $nama_barang, $harga, $stok, $id_kategori, $fo
     $stmt->bind_param('isiiiss', $id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi);
     return $stmt->execute();
 }
+
+function get_smart_recommendation() {
+    return db_all("
+        SELECT id_produk, nama, harga, foto_barang, '🚨 Sisa Dikit!' AS label_promo 
+        FROM produk 
+        WHERE stok <= 5 AND stok > 0
+        
+        UNION ALL
+        
+        SELECT id_produk, nama, harga, foto_barang, '💎 Premium' AS label_promo 
+        FROM produk 
+        WHERE harga >= 15000000
+    ");
+}

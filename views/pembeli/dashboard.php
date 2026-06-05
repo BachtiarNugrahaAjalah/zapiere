@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../models/ProductModel.php';
 
 $user = require_role('pembeli');
 
+$recommendations = get_smart_recommendation();
 $kategoriList = db_all("SELECT * FROM kategori ORDER BY id_kategori");
 $produkList   = get_all_data_produk();
 
@@ -72,6 +73,36 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
             </div>
         </div>
     </div>
+
+    <?php if (!empty($recommendations)): ?>
+    <div class="mb-10 rounded-2xl bg-[#011C27] p-6 shadow-xl">
+        <div class="mb-5">
+            <h2 class="text-2xl font-black text-[#FECEE9] flex items-center gap-2">
+                <i class="ph-fill ph-sparkle"></i> Rekomendasi Pintar Zapiere
+            </h2>
+            <p class="mt-1 text-sm text-gray-300">Pilihan produk premium dan barang incaran yang hampir habis. Amankan sekarang!</p>
+        </div>
+        
+        <div class="flex gap-4 overflow-x-auto no-scrollbar pb-3">
+            <?php foreach ($recommendations as $item): ?>
+                <!-- Card Produk Rekomendasi -->
+                <div class="w-48 flex-shrink-0 rounded-xl bg-white p-4 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col justify-between">
+                    <div>
+                        <!-- Stiker Label (Berubah warna tergantung tipe dari UNION) -->
+                        <span class="mb-3 inline-block rounded-full <?= str_contains($item['label_promo'], 'Sisa') ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700' ?> px-2.5 py-1 text-[10px] font-black uppercase tracking-wider">
+                            <?= e($item['label_promo']) ?>
+                        </span>
+                        
+                        <img src="<?= e(asset_url('assets/images/' . ($item['foto_barang'] ?: 'default.png'))) ?>" alt="Foto Produk" class="h-28 w-full object-contain mb-3 drop-shadow-sm">
+                        
+                        <h3 class="line-clamp-2 text-sm font-bold text-[#0a0a0a] leading-tight mb-2"><?= e($item['nama']) ?></h3>
+                    </div>
+                    <p class="text-base font-extrabold text-[#011C27]">Rp <?= number_format($item['harga'], 0, ',', '.') ?></p>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>

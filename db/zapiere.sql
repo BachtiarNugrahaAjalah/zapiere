@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 05, 2026 at 08:32 AM
+-- Generation Time: Jun 05, 2026 at 12:05 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.3.26
 
@@ -129,6 +129,38 @@ END$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `tambah_produk` (IN `in_nama` VARCHAR(100), IN `in_harga` INT, IN `in_stok` INT, IN `in_id_user` INT, IN `in_id_kategori` INT, IN `in_foto_barang` VARCHAR(255), IN `in_deskripsi` TEXT)   BEGIN
  	INSERT INTO produk (nama, harga, stok, id_user, id_kategori, foto_barang, deskripsi)
 	VALUES (in_nama, in_harga, in_stok, in_id_user, in_id_kategori, in_foto_barang, in_deskripsi);
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `tampil_produk` ()   BEGIN
+    SELECT p.*,
+           u.nama AS penjual,
+           k.nama AS kategori
+    FROM produk p
+    INNER JOIN users u ON p.id_user = u.id_user
+    INNER JOIN kategori k ON p.id_kategori = k.id_kategori;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `topup_saldo` (IN `p_id_user` INT, IN `p_nominal` INT)   BEGIN
+    DECLARE v_nama VARCHAR(100);
+
+    START TRANSACTION;
+
+    SELECT nama INTO v_nama FROM users WHERE id_user = p_id_user FOR UPDATE;
+
+    IF v_nama IS NULL THEN
+        ROLLBACK;
+        SELECT 'Gagal' AS status, 'User tidak ditemukan!' AS pesan;
+    ELSE
+
+        UPDATE users SET saldo = saldo + p_nominal WHERE id_user = p_id_user;
+        
+        INSERT INTO log_aktifitas (id_user, keterangan, tgl_aktifitas) 
+        VALUES (p_id_user, CONCAT('Top-up saldo Rp ', p_nominal), NOW());
+
+        COMMIT;
+        SELECT 'Berhasil' AS status, 'Top-up sukses!' AS pesan;
+    END IF;
+
 END$$
 
 --
@@ -273,7 +305,11 @@ INSERT INTO `log_aktifitas` (`id_log`, `id_user`, `keterangan`, `tgl_aktifitas`)
 (4, 4, 'Membeli Produk: Laptop Asus ROG Strix (1 pcs)', '2026-06-01 10:30:00'),
 (5, 4, 'Membeli Produk: Mouse Wireless Logitech G304 (2 pcs)', '2026-06-01 10:30:00'),
 (6, 5, 'Membeli Produk: TWS Soundcore R50i (1 pcs)', '2026-06-02 14:15:00'),
-(7, 6, 'Membeli Produk: Monitor LG 24 Inch IPS (1 pcs)', '2026-06-05 01:30:32');
+(7, 6, 'Membeli Produk: Monitor LG 24 Inch IPS (1 pcs)', '2026-06-05 01:30:32'),
+(10, 2, 'Top-up saldo Rp 50000', '2026-06-05 17:39:19'),
+(11, 7, 'Top-up saldo Rp 10000', '2026-06-05 17:47:28'),
+(12, NULL, 'Memperbarui Informasi Produk: PC Rakitan Core i5 12400F', '2026-06-05 18:08:46'),
+(13, NULL, 'Memperbarui Informasi Produk: Xiaomi 14 12/256GB', '2026-06-05 18:08:53');
 
 -- --------------------------------------------------------
 
@@ -297,6 +333,20 @@ INSERT INTO `pesanan` (`id_pesanan`, `id_user`, `tanggal`) VALUES
 (3, 6, '2026-06-05 01:30:32'),
 (4, 4, '2026-06-05 15:16:49'),
 (8, 4, '2026-06-05 15:26:55');
+
+--
+-- Triggers `pesanan`
+--
+DELIMITER $$
+CREATE TRIGGER `insert_pesanan` AFTER INSERT ON `pesanan` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Melakukan Pembelian Produk. ID Pesanan: ', NEW.id_pesanan),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -326,11 +376,11 @@ INSERT INTO `produk` (`id_produk`, `id_user`, `nama`, `harga`, `stok`, `id_kateg
 (5, 2, 'Monitor LG 24 Inch', 1500000, 16, 1, '1780642805_b8515e4b80934702a7a7b01b00f8f6da.webp', 'Monitor LG 24 inch panel. Layar jernih, warna akurat cocok untuk desain maupun main game ringan. Minus pemakaian wajar, tidak ada dead pixel.'),
 (6, 2, 'Lenovo Legion 5 Pro', 22000000, 8, 1, 'default.png', 'Laptop gaming andalan dengan RTX 4060 dan layar WQHD+ 165Hz. Cocok untuk hardcore gamer dan content creator.'),
 (7, 3, 'Macbook Air M2 256GB Space Gray', 18500000, 15, 1, 'default.png', 'Laptop super tipis dan ringan dari Apple dengan chip M2. Baterai tahan seharian penuh untuk produktivitas maksimal.'),
-(8, 2, 'PC Rakitan Core i5 12400F', 8500000, 5, 1, 'default.png', 'PC Rakitan siap pakai untuk gaming mid-range. Sudah terinstall Windows 11, aplikasi standar, dan garansi part 1 tahun.'),
+(8, 2, 'PC Rakitan Core i5 12400F', 8500000, 2, 1, 'default.png', 'PC Rakitan siap pakai untuk gaming mid-range. Sudah terinstall Windows 11, aplikasi standar, dan garansi part 1 tahun.'),
 (9, 3, 'SSD Samsung 980 PRO 1TB NVMe', 1800000, 29, 1, 'default.png', 'SSD PCIe 4.0 dengan kecepatan baca hingga 7000MB/s. Loading game jadi super cepat dan copy data hitungan detik.'),
 (10, 2, 'Samsung Galaxy S24 Ultra 512GB', 21000000, 12, 2, 'default.png', 'Smartphone flagship dengan fitur Galaxy AI, kamera utama 200MP, frame titanium, dan S Pen bawaan.'),
 (11, 3, 'iPad Pro M4 11-inch Wi-Fi 256GB', 19000000, 7, 2, 'default.png', 'Tablet paling mutakhir dari Apple dengan layar Ultra Retina XDR OLED dan chip M4 yang sangat bertenaga untuk render video.'),
-(12, 2, 'Xiaomi 14 12/256GB', 12000000, 20, 2, 'default.png', 'Flagship berukuran compact dengan lensa Leica otentik. Performa ngebut dengan chipset Snapdragon 8 Gen 3 terbaru.'),
+(12, 2, 'Xiaomi 14 12/256GB', 12000000, 3, 2, 'default.png', 'Flagship berukuran compact dengan lensa Leica otentik. Performa ngebut dengan chipset Snapdragon 8 Gen 3 terbaru.'),
 (13, 3, 'Poco X6 Pro 5G', 4500000, 45, 2, 'default.png', 'Ponsel mid-range killer. Menggunakan prosesor Dimensity 8300 Ultra, cocok banget buat gaming kompetitif tanpa frame drop.'),
 (14, 2, 'Keyboard Mechanical Keychron K2', 1350000, 25, 3, 'default.png', 'Keyboard mechanical wireless layout 75%. Menggunakan switch Gateron Brown yang tactile namun tidak berisik.'),
 (15, 3, 'Mouse Razer DeathAdder V3 Pro', 2200000, 10, 3, 'default.png', 'Mouse gaming wireless ultra ringan favorit atlet esports dunia. Menggunakan sensor optik presisi tinggi dan minim latensi.'),
@@ -346,6 +396,40 @@ INSERT INTO `produk` (`id_produk`, `id_user`, `nama`, `harga`, `stok`, `id_kateg
 (25, 3, 'Mesin Cuci LG Front Load 8kg', 5100000, 5, 5, 'default.png', 'Mesin cuci bukaan depan dengan teknologi AI DD. Pintar mendeteksi jenis kain agar mencuci lebih bersih namun tetap merawat pakaian.'),
 (26, 2, 'Laptop Advan Work Pro', 100000, 50, 1, '1780641477_telur.png', 'Laptop baut lepas, engsel mangap'),
 (27, 2, 'Laptop Advan Work Pro', 100000, 49, 1, 'default.png', 'Laptop baut lepas, engsel mangap');
+
+--
+-- Triggers `produk`
+--
+DELIMITER $$
+CREATE TRIGGER `delete_produk` AFTER DELETE ON `produk` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Menghapus Produk: ', OLD.nama),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `insert_produk` AFTER INSERT ON `produk` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Menambahkan Produk Baru: ', NEW.nama),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `update_produk` AFTER UPDATE ON `produk` FOR EACH ROW BEGIN
+    INSERT INTO log_aktifitas(keterangan, tgl_aktifitas)
+    VALUES (
+        CONCAT('Memperbarui Informasi Produk: ', NEW.nama),
+        NOW()
+    );
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -369,11 +453,12 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id_user`, `username`, `nama`, `password`, `role`, `saldo`, `nama_toko`) VALUES
 (1, 'admin_zapiere', 'Admin Zapiere', 'admin123', 'admin', 0, ''),
-(2, 'andi_komputer', 'Andi Komputer', 'pass123', 'penjual', 17100000, 'Toko Komputer Jaya'),
+(2, 'andi_komputer', 'Andi Komputer', 'pass123', 'penjual', 17150000, 'Toko Komputer Jaya'),
 (3, 'ahmad_sobri', 'Ahmad Sobri', 'pass123', 'penjual', 4600000, 'Gadget Murah'),
 (4, 'abdul_buyer', 'Abdul', 'pass123', 'pembeli', 300000, ''),
 (5, 'budi_buyer', 'Budi Santoso', 'pass123', 'pembeli', 500000, ''),
-(6, 'bach', 'Bachtiar Nugraha', 'bachtiarX24', 'pembeli', 0, '');
+(6, 'bach', 'Bachtiar Nugraha', 'bachtiarX24', 'pembeli', 0, ''),
+(7, 'rara', 'rara ya', '111111', 'pembeli', 10000, '');
 
 -- --------------------------------------------------------
 
@@ -383,11 +468,10 @@ INSERT INTO `users` (`id_user`, `username`, `nama`, `password`, `role`, `saldo`,
 --
 CREATE TABLE `v_log_aktifitas` (
 `id_log` int
-,`id_user` int
 ,`keterangan` varchar(255)
-,`tgl_aktifitas` datetime
-,`nama` varchar(100)
+,`nama_pelaku` varchar(100)
 ,`role` enum('penjual','pembeli','admin')
+,`tgl_aktifitas` datetime
 );
 
 -- --------------------------------------------------------
@@ -398,13 +482,13 @@ CREATE TABLE `v_log_aktifitas` (
 --
 CREATE TABLE `v_penjualan_detail` (
 `id_pesanan` int
-,`tanggal` datetime
-,`pembeli` varchar(100)
-,`produk` varchar(100)
 ,`id_user_penjual` int
 ,`jumlah` int
+,`pembeli` varchar(100)
+,`produk` varchar(100)
 ,`subtotal` bigint
 ,`subtotal_rp` varchar(50)
+,`tanggal` datetime
 );
 
 -- --------------------------------------------------------
@@ -416,12 +500,12 @@ CREATE TABLE `v_penjualan_detail` (
 CREATE TABLE `v_pesanan_lengkap` (
 `id_pesanan` int
 ,`id_user` int
-,`tanggal` datetime
 ,`pembeli` varchar(100)
-,`total_item` int
+,`produk` text
+,`tanggal` datetime
 ,`total_bayar` int
 ,`total_bayar_rp` varchar(50)
-,`produk` text
+,`total_item` int
 );
 
 -- --------------------------------------------------------
@@ -431,20 +515,20 @@ CREATE TABLE `v_pesanan_lengkap` (
 -- (See below for the actual view)
 --
 CREATE TABLE `v_produk_lengkap` (
-`id_produk` int
-,`id_user` int
-,`nama` varchar(100)
+`foto_barang` varchar(255)
 ,`harga` int
 ,`harga_rp` varchar(50)
-,`stok` int
-,`is_tersedia` tinyint(1)
 ,`id_kategori` int
-,`foto_barang` varchar(255)
+,`id_produk` int
+,`id_user` int
+,`is_tersedia` tinyint(1)
 ,`kategori` varchar(100)
-,`penjual` varchar(100)
-,`total_terjual` int
+,`nama` varchar(100)
 ,`omzet` bigint
 ,`omzet_rp` varchar(50)
+,`penjual` varchar(100)
+,`stok` int
+,`total_terjual` int
 );
 
 -- --------------------------------------------------------
@@ -454,7 +538,7 @@ CREATE TABLE `v_produk_lengkap` (
 --
 DROP TABLE IF EXISTS `v_log_aktifitas`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_log_aktifitas`  AS SELECT `la`.`id_log` AS `id_log`, `la`.`id_user` AS `id_user`, `la`.`keterangan` AS `keterangan`, `la`.`tgl_aktifitas` AS `tgl_aktifitas`, `u`.`nama` AS `nama`, `u`.`role` AS `role` FROM (`log_aktifitas` `la` left join `users` `u` on((`u`.`id_user` = `la`.`id_user`)))  ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_log_aktifitas`  AS SELECT `l`.`id_log` AS `id_log`, `l`.`tgl_aktifitas` AS `tgl_aktifitas`, coalesce(`u`.`nama`,'Sistem / Akun Dihapus') AS `nama_pelaku`, `u`.`role` AS `role`, `l`.`keterangan` AS `keterangan` FROM (`log_aktifitas` `l` left join `users` `u` on((`l`.`id_user` = `u`.`id_user`)))  ;
 
 -- --------------------------------------------------------
 
@@ -536,7 +620,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `detail_pesanan`
 --
 ALTER TABLE `detail_pesanan`
-  MODIFY `id_detail` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id_detail` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `kategori`
@@ -548,13 +632,13 @@ ALTER TABLE `kategori`
 -- AUTO_INCREMENT for table `log_aktifitas`
 --
 ALTER TABLE `log_aktifitas`
-  MODIFY `id_log` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_log` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `pesanan`
 --
 ALTER TABLE `pesanan`
-  MODIFY `id_pesanan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_pesanan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `produk`
@@ -566,7 +650,7 @@ ALTER TABLE `produk`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id_user` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_user` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Constraints for dumped tables

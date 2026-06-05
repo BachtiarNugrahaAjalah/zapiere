@@ -82,3 +82,20 @@ function dashboard_url_for_role(string $role): string
 
     return url_for($map[$role] ?? 'login.php');
 }
+
+function proses_topup($id_user, $nominal) 
+{
+    $hasil = db_one("CALL topup_saldo($id_user, $nominal)");
+
+    if ($hasil) {
+        return [
+            'success' => ($hasil['status'] === 'Berhasil'),
+            'message' => $hasil['pesan']
+        ];
+    }
+
+    return [
+        'success' => false, 
+        'message' => 'Gagal terhubung ke database.'
+    ];
+}
