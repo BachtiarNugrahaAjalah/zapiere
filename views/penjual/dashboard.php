@@ -48,7 +48,7 @@ zapiere_page_start('Dashboard Penjual', 'penjual', 'dashboard', 'Pantau produk, 
                 <?php foreach ($lowStockTop4 as $product): ?>
                     <div class="grid grid-cols-[2fr_0.9fr_0.5fr] items-center px-4 py-3 gap-2">
                         <div class="flex items-center gap-3 min-w-0">
-                            <img src="<?= e(product_image_url($product)) ?>" alt="<?= e($product['nama']) ?>" class="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 object-contain">
+                            <img src="<?= e(product_image_url($product['foto_barang'] ?? '')) ?>" alt="<?= e($product['nama']) ?>" class="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 object-contain">
                             <p class="truncate text-sm font-black"><?= e($product['nama']) ?></p>
                         </div>
                         <p class="text-sm font-semibold text-[#545677] truncate"><?= e($product['kategori']) ?></p>

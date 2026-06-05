@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../models/UserModel.php';
+require_once __DIR__ . '/../../models/ProductModel.php';
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -29,58 +30,12 @@ if (!$conn) {
     exit;
 }
 
-mysqli_begin_transaction($conn);
+$idPembeli = (int)$user['id_user'];
+$jsonCartData = json_encode($data['cart']);
 
 try {
-    $userId = (int)$user['id_user'];
-    
-    $stmt = mysqli_prepare($conn, "INSERT INTO pesanan (id_user, tanggal) VALUES (?, NOW())");
-    mysqli_stmt_bind_param($stmt, "i", $userId);
-    if (!mysqli_stmt_execute($stmt)) {
-        throw new Exception("Gagal membuat data pesanan utama.");
-    }
-    $pesananId = mysqli_insert_id($conn);
-    
-    foreach ($data['cart'] as $item) {
-        $produkId = (int)$item['id_produk'];
-        $jumlah = (int)$item['jumlah'];
-        
-        $stmtProd = mysqli_prepare($conn, "SELECT stok, nama FROM produk WHERE id_produk = ? FOR UPDATE");
-        mysqli_stmt_bind_param($stmtProd, "i", $produkId);
-        mysqli_stmt_execute($stmtProd);
-        $resProd = mysqli_stmt_get_result($stmtProd);
-        $prod = mysqli_fetch_assoc($resProd);
-        
-        if (!$prod) {
-            throw new Exception("Sebuah produk di keranjang tidak ditemukan di database.");
-        }
-        if ($prod['stok'] < $jumlah) {
-            throw new Exception("Stok '{$prod['nama']}' tidak mencukupi. Sisa stok: {$prod['stok']}.");
-        }
-        
-        $stmtDetail = mysqli_prepare($conn, "INSERT INTO detail_pesanan (id_pesanan, id_produk, jumlah) VALUES (?, ?, ?)");
-        mysqli_stmt_bind_param($stmtDetail, "iii", $pesananId, $produkId, $jumlah);
-        if (!mysqli_stmt_execute($stmtDetail)) {
-            throw new Exception("Gagal menyimpan rincian pesanan untuk produk '{$prod['nama']}'.");
-        }
-        
-        $newStok = $prod['stok'] - $jumlah;
-        $stmtUpdate = mysqli_prepare($conn, "UPDATE produk SET stok = ? WHERE id_produk = ?");
-        mysqli_stmt_bind_param($stmtUpdate, "ii", $newStok, $produkId);
-        if (!mysqli_stmt_execute($stmtUpdate)) {
-            throw new Exception("Gagal memperbarui sisa stok.");
-        }
-        
-        $keterangan = "Membeli Produk: {$prod['nama']} ({$jumlah} pcs)";
-        $stmtLog = mysqli_prepare($conn, "INSERT INTO log_aktifitas (id_user, keterangan, tgl_aktifitas) VALUES (?, ?, NOW())");
-        mysqli_stmt_bind_param($stmtLog, "is", $userId, $keterangan);
-        mysqli_stmt_execute($stmtLog);
-    }
-    
-    mysqli_commit($conn);
-    echo json_encode(['success' => true, 'message' => 'Pesanan berhasil diproses.']);
-    
+    $result = checkout($idPembeli, $jsonCartData);
+    echo json_encode($result);
 } catch (Exception $e) {
-    mysqli_rollback($conn);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }

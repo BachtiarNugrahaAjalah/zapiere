@@ -5,6 +5,14 @@ require_once __DIR__ . '/session_guard.php';
 function zapiere_pembeli_page_start(string $title, string $active): void
 {
     $user = require_role('pembeli');
+    
+    
+    $userId = (int) $user['id_user'];
+    $dbUser = db_one("SELECT saldo FROM users WHERE id_user = {$userId}");
+    if ($dbUser) {
+        $user['saldo'] = $dbUser['saldo'];
+        $_SESSION['zapiere_user']['saldo'] = $dbUser['saldo'];
+    }
     ?>
     <!DOCTYPE html>
     <html lang="id">

@@ -148,7 +148,7 @@ zapiere_page_start('Dashboard Admin', 'admin', 'dashboard', 'Ringkasan operasion
             <div class="space-y-3">
                 <?php foreach ($topProducts as $product): ?>
                     <div class="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
-                        <img src="<?= e(product_image_url($product)) ?>" alt="<?= e($product['nama']) ?>" class="h-14 w-14 rounded-lg bg-slate-950 object-contain">
+                        <img src="<?= e(product_image_url($product['foto_barang'] ?? '')) ?>" alt="<?= e($product['nama']) ?>" class="h-14 w-14 rounded-lg bg-slate-950 object-contain">
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-black"><?= e($product['nama']) ?></p>
                             <p class="mt-1 text-xs font-semibold text-[#545677]"><?= e($product['kategori']) ?> - <?= e($product['total_terjual']) ?> terjual</p>

@@ -6,22 +6,19 @@ require_once __DIR__ . '/../../models/ProductModel.php';
 $user = require_role('penjual');
 $sellerId = (int) $user['id_user'];
 
-$deleted = false;
-$deleteError = '';
-$saveMessage = '';
-$saveError = '';
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_action'])) {
     if ($_POST['_action'] === 'delete') {
         $idProduk = (int) ($_POST['id_produk'] ?? 0);
         if ($idProduk > 0) {
             $check = db_one("SELECT id_produk FROM produk WHERE id_produk = {$idProduk} AND id_user = {$sellerId}");
             if ($check) {
-                // delete
-                $deleted = db_exec("DELETE FROM produk WHERE id_produk = {$idProduk} AND id_user = {$sellerId}");
-                if (!$deleted) $deleteError = 'Gagal menghapus produk.';
+                if (db_exec("DELETE FROM produk WHERE id_produk = {$idProduk} AND id_user = {$sellerId}")) {
+                    $_SESSION['toast'] = ['title' => 'Berhasil', 'msg' => 'Produk berhasil dihapus.', 'ok' => true];
+                } else {
+                    $_SESSION['toast'] = ['title' => 'Gagal', 'msg' => 'Gagal menghapus produk.', 'ok' => false];
+                }
             } else {
-                $deleteError = 'Produk tidak ditemukan atau bukan milik toko Anda.';
+                $_SESSION['toast'] = ['title' => 'Gagal', 'msg' => 'Produk tidak ditemukan atau bukan milik Anda.', 'ok' => false];
             }
         }
     } elseif ($_POST['_action'] === 'save') {
@@ -44,14 +41,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_action'])) {
         }
 
         if ($idProduk > 0) {
-            // (query edit)
-            $saveMessage = 'Produk berhasil diupdate.';
+            if (empty($fotoBarang)) {
+                $oldProduct = db_one("SELECT foto_barang FROM produk WHERE id_produk = {$idProduk}");
+                $fotoBarang = $oldProduct['foto_barang'] ?? 'default.png';
+            }
+            
+            if (edit_product($idProduk, $namaBarang, $harga, $stok, $idKategori, $fotoBarang, $deskripsi)) {
+                $_SESSION['toast'] = ['title' => 'Berhasil', 'msg' => 'Produk berhasil diupdate.', 'ok' => true];
+            } else {
+                $_SESSION['toast'] = ['title' => 'Gagal', 'msg' => 'Gagal mengupdate produk.', 'ok' => false];
+            }
         } else {
-            // (query tambah)
-            $saveMessage = 'Produk berhasil ditambahkan.';
+            if (empty($fotoBarang)) {
+                $fotoBarang = 'default.png';
+            }
+            
+            if (add_product($namaBarang, $harga, $stok, $sellerId, $idKategori, $fotoBarang, $deskripsi)) {
+                $_SESSION['toast'] = ['title' => 'Berhasil', 'msg' => 'Produk berhasil ditambahkan.', 'ok' => true];
+            } else {
+                $_SESSION['toast'] = ['title' => 'Gagal', 'msg' => 'Gagal menambahkan produk.', 'ok' => false];
+            }
         }
     }
+    
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
 }
+
+$toast = $_SESSION['toast'] ?? null;
+unset($_SESSION['toast']);
 
 $products = get_all_data_produk($sellerId);
 $categories = db_all("SELECT * FROM kategori ORDER BY nama ASC");
@@ -59,25 +77,25 @@ $categories = db_all("SELECT * FROM kategori ORDER BY nama ASC");
 zapiere_page_start('Kelola Produk', 'penjual', 'kelola', 'Daftar semua produk yang terdaftar di tokomu.');
 ?>
 
-<?php if ($deleted): ?>
-    <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 mb-4">
-        Produk berhasil dihapus.
+<?php if ($toast): ?>
+<div id="toast" class="fixed bottom-4 right-0 z-[100] flex w-full max-w-sm justify-end transition-transform duration-500 transform translate-x-full pr-4">
+    <div class="bg-white border-l-4 <?= $toast['ok'] ? 'border-green-500' : 'border-red-500' ?> shadow-2xl rounded-r-xl p-4 flex items-start gap-3 w-80">
+        <i data-lucide="<?= $toast['ok'] ? 'check-circle-2' : 'alert-circle' ?>" class="<?= $toast['ok'] ? 'text-green-500' : 'text-red-500' ?> h-6 w-6 mt-0.5"></i>
+        <div class="flex-1">
+            <h4 class="text-sm font-black text-[#011C27]"><?= e($toast['title']) ?></h4>
+            <p class="mt-0.5 text-xs font-semibold text-[#545677] leading-relaxed"><?= e($toast['msg']) ?></p>
+        </div>
     </div>
-<?php endif; ?>
-<?php if ($deleteError): ?>
-    <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 mb-4">
-        <?= e($deleteError) ?>
-    </div>
-<?php endif; ?>
-<?php if ($saveMessage): ?>
-    <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 mb-4">
-        <?= e($saveMessage) ?>
-    </div>
-<?php endif; ?>
-<?php if ($saveError): ?>
-    <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 mb-4">
-        <?= e($saveError) ?>
-    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toast = document.getElementById('toast');
+        if (toast) {
+            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.remove('translate-x-full')));
+            setTimeout(() => toast.classList.add('translate-x-full'), 3500);
+        }
+    });
+</script>
 <?php endif; ?>
 
 <div class="flex items-center justify-between gap-4">
@@ -102,9 +120,9 @@ zapiere_page_start('Kelola Produk', 'penjual', 'kelola', 'Daftar semua produk ya
         <?php foreach ($products as $product): ?>
             <div class="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft transition hover:shadow-lg hover:-translate-y-0.5 duration-200">
 
-                <div class="relative h-44 w-full overflow-hidden bg-slate-950 flex-shrink-0">
+                <div class="relative h-44 w-full overflow-hidden bg-white flex-shrink-0">
                     <img
-                        src="<?= e(product_image_url($product)) ?>"
+                        src="<?= e(product_image_url($product['foto_barang'] ?? '')) ?>"
                         alt="<?= e($product['nama']) ?>"
                         class="h-full w-full object-contain p-3 transition duration-300 group-hover:scale-105"
                     >
@@ -160,7 +178,7 @@ zapiere_page_start('Kelola Produk', 'penjual', 'kelola', 'Daftar semua produk ya
 
 <div id="modal-detail" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#011C27]/60 backdrop-blur-sm p-4">
     <div class="relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300 max-h-[90vh]">
-        <div class="relative h-64 flex-shrink-0 bg-slate-950 flex items-center justify-center overflow-hidden">
+        <div class="relative h-64 flex-shrink-0 bg-white flex items-center justify-center overflow-hidden border-b border-slate-100">
             <img id="d-img" src="" alt="" class="h-full w-full object-contain p-4">
             <button onclick="closeModal('modal-detail')" class="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur text-[#011C27] hover:bg-white transition">
                 <i data-lucide="x" class="h-4 w-4"></i>
@@ -250,12 +268,17 @@ zapiere_page_start('Kelola Produk', 'penjual', 'kelola', 'Daftar semua produk ya
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.appendChild(document.getElementById('modal-detail'));
+        document.body.appendChild(document.getElementById('modal-form'));
+    });
+
     const productsData = <?= json_encode(array_values($products)) ?>;
 
     function openDetail(id) {
         const p = productsData.find(x => parseInt(x.id_produk) === id);
         if (!p) return;
-        document.getElementById('d-img').src       = p.foto_barang && !['asus_rog.png','logitech_g304.png','iphone15.png','soundcore.png','monitor_lg.png','default.png'].includes(p.foto_barang)
+        document.getElementById('d-img').src       = p.foto_barang
                                                         ? '<?= e(url_for('assets/images/')) ?>' + p.foto_barang
                                                         : '<?= e(url_for('assets/images/image.png')) ?>';
         document.getElementById('d-img').alt       = p.nama;

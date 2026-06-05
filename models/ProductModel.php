@@ -29,15 +29,12 @@ function sales_rows(int $sellerId): array
     ");
 }
 
-function product_image_url(array $product): string
+function product_image_url($foto_barang): string
 {
-    $file = $product['foto_barang'] ?? 'image.png';
-    $known = ['asus_rog.png', 'logitech_g304.png', 'iphone15.png', 'soundcore.png', 'monitor_lg.png', 'default.png'];
-
-    if (in_array($file, $known, true) || trim((string) $file) === '') {
-        $file = 'image.png';
+    $file = trim((string) $foto_barang);
+    if ($file === '') {
+        $file = 'default.png';
     }
-
     return asset_url('assets/images/' . $file);
 }
 
@@ -50,8 +47,45 @@ function get_all_data_produk(?int $sellerId = null) {
     $where = $sellerId !== null ? "WHERE p.id_user = {$sellerId}" : '';
     return db_all("
         SELECT p.*, u.nama as penjual, k.nama as kategori FROM produk p 
-        RIGHT JOIN users u ON p.id_user = u.id_user
-        RIGHT JOIN kategori k ON p.id_kategori = k.id_kategori
+        INNER JOIN users u ON p.id_user = u.id_user
+        INNER JOIN kategori k ON p.id_kategori = k.id_kategori
         {$where}
     ");
+}
+
+function checkout($idPembeli, $jsonCartData) {
+    global $conn;
+    $stmt = $conn->prepare("CALL checkout_produk(?, ?)");
+    $stmt->bind_param("is", $idPembeli, $jsonCartData);
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("Gagal mengeksekusi prosedur checkout.");
+    }
+    
+    $res = mysqli_stmt_get_result($stmt);
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        if ($row && $row['status'] === 'Berhasil') {
+            return ['success' => true, 'message' => $row['pesan']];
+        } else {
+            $msg = $row['pesan'] ?? 'Terjadi kesalahan saat checkout.';
+            return ['success' => false, 'message' => $msg];
+        }
+    } else {
+        throw new Exception("Tidak ada respon dari server.");
+    }
+}
+
+function add_product($nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi) {
+    global $conn;
+    $stmt = $conn->prepare("CALL tambah_produk(?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('siiiiss', $nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi);
+    return $stmt->execute();
+}
+
+function edit_product($id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi) {
+    global $conn;
+    $stmt = $conn->prepare("CALL edit_produk(?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('isiiiss', $id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi);
+    return $stmt->execute();
 }

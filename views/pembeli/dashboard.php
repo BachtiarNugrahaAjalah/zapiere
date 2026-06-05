@@ -92,7 +92,7 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
             onclick="openDetail(this)"
         >
             <div class="h-44 bg-white flex items-center justify-center relative overflow-hidden">
-                <img src="<?= e(product_image_url($p)) ?>" alt="<?= e($p['nama']) ?>" class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500">
+                <img src="<?= e(product_image_url($p['foto_barang'] ?? '')) ?>" alt="<?= e($p['nama']) ?>" class="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500">
             </div>
             <div class="p-4 flex flex-col flex-grow bg-white">
                 <span class="text-[10px] font-bold text-zDark/70 uppercase tracking-widest mb-1.5 truncate"><?= e($p['kategori'] ?? '-') ?></span>
@@ -107,7 +107,7 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
             <span class="hidden modal-stok"><?= (int)$p['stok'] ?></span>
             <span class="hidden modal-penjual"><?= e($p['penjual'] ?? '-') ?></span>
             <span class="hidden modal-deskripsi"><?= e($p['deskripsi'] ?? 'Tidak ada deskripsi.') ?></span>
-            <span class="hidden modal-img-src"><?= e(product_image_url($p)) ?></span>
+            <span class="hidden modal-img-src"><?= e(product_image_url($p['foto_barang'] ?? '')) ?></span>
         </div>
         <?php endforeach; ?>
     </div>
@@ -149,9 +149,9 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
                 <p id="modal-desc" class="text-sm text-zSlate leading-relaxed"></p>
             </div>
             <div class="flex flex-col sm:flex-row items-center gap-4 mt-auto pt-2">
-                <div class="flex items-center justify-between border border-gray-300 rounded-xl w-32 overflow-hidden bg-white shadow-sm flex-shrink-0">
+                <div class="flex items-center border border-gray-300 rounded-xl w-32 overflow-hidden bg-white shadow-sm flex-shrink-0">
                     <button onclick="updateQty(-1)" class="w-10 h-10 flex items-center justify-center text-zSlate hover:text-zDark hover:bg-zBlush transition-colors font-bold text-lg">-</button>
-                    <input type="number" id="modal-qty" value="1" min="1" class="w-10 text-center bg-transparent text-zDark font-bold focus:outline-none pointer-events-none" readonly>
+                    <input type="text" id="modal-qty" value="1" class="flex-1 w-full text-center bg-transparent text-zDark font-bold focus:outline-none pointer-events-none" readonly>
                     <button onclick="updateQty(1)" class="w-10 h-10 flex items-center justify-center text-zSlate hover:text-zDark hover:bg-zBlush transition-colors font-bold text-lg">+</button>
                 </div>
                 <button id="btn-add-cart" class="w-full bg-zDark hover:bg-opacity-90 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-zDark/20">
@@ -323,7 +323,15 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
                     <div class="flex-grow flex flex-col justify-center">
                         <h4 class="font-bold text-[#0a0a0a] text-sm line-clamp-1 mb-1">${item.product.nama}</h4>
                         <div class="flex justify-between items-center mt-auto">
-                            <p class="text-xs text-zSlate font-medium">${item.qty} Barang</p>
+                            <div class="flex items-center gap-2">
+                                <button onclick="changeQty(${idx}, -1)" class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors">
+                                    <i class="ph-bold ph-minus text-[10px]"></i>
+                                </button>
+                                <p class="text-xs text-zDark font-bold min-w-[1rem] text-center">${item.qty}</p>
+                                <button onclick="changeQty(${idx}, 1)" class="w-6 h-6 rounded-full bg-[#FECEE9] flex items-center justify-center text-[#011C27] hover:bg-[#EB9FEF] transition-colors">
+                                    <i class="ph-bold ph-plus text-[10px]"></i>
+                                </button>
+                            </div>
                             <p class="text-sm font-bold text-zDark">${formatRp(item.product.harga * item.qty)}</p>
                         </div>
                     </div>
@@ -341,6 +349,22 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
         updateCartUI();
         if (cart.length === 0) closeModal('checkout-modal');
         else renderCheckoutItems();
+    }
+
+    function changeQty(idx, delta) {
+        const item = cart[idx];
+        const newQty = item.qty + delta;
+        if (newQty <= 0) {
+            removeFromCart(idx);
+            return;
+        }
+        if (newQty > item.product.stok) {
+            showToast('Stok Tidak Cukup', `Sisa stok ${item.product.nama} hanya ${item.product.stok} pcs.`, false);
+            return;
+        }
+        item.qty = newQty;
+        updateCartUI();
+        renderCheckoutItems();
     }
 
     async function processCheckout() {

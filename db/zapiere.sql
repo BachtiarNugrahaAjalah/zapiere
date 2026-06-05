@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 05, 2026 at 05:11 AM
+-- Generation Time: Jun 05, 2026 at 08:32 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.3.26
 
@@ -25,6 +25,92 @@ DELIMITER $$
 --
 -- Procedures
 --
+CREATE DEFINER=`root`@`localhost` PROCEDURE `checkout_produk` (IN `p_id_pembeli` INT, IN `p_data_keranjang` JSON)   main_block: BEGIN
+    DECLARE v_idx INT DEFAULT 0;
+    DECLARE v_jml_jenis_barang_dipesan INT;
+    DECLARE v_jumlah_beli INT;
+    
+    DECLARE v_id_produk INT;
+    DECLARE v_stok INT;
+    DECLARE v_harga INT;
+    DECLARE v_id_penjual INT;
+    DECLARE v_nama_produk VARCHAR(100);
+
+    DECLARE v_total_tagihan INT DEFAULT 0;
+    DECLARE v_saldo_pembeli INT;
+    DECLARE v_id_pesanan INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        ROLLBACK;
+        SELECT 'Gagal' AS status, 'Terjadi kesalahan sistem (Database Error).' AS pesan;
+    END;
+
+    START TRANSACTION;
+
+    SELECT saldo INTO v_saldo_pembeli 
+    FROM users 
+    WHERE id_user = p_id_pembeli 
+    FOR UPDATE;
+
+    INSERT INTO pesanan (id_user, tanggal) VALUES (p_id_pembeli, NOW());
+    SET v_id_pesanan = LAST_INSERT_ID();
+
+    SET v_jml_jenis_barang_dipesan = JSON_LENGTH(p_data_keranjang);
+
+    WHILE v_idx < v_jml_jenis_barang_dipesan DO
+        
+        SET v_id_produk = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_data_keranjang, CONCAT('$[', v_idx, '].id_produk'))) AS UNSIGNED);
+        SET v_jumlah_beli = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_data_keranjang, CONCAT('$[', v_idx, '].jumlah'))) AS UNSIGNED);
+
+        SET v_stok = NULL;
+        SELECT stok, harga, id_user, nama 
+        INTO v_stok, v_harga, v_id_penjual, v_nama_produk 
+        FROM produk 
+        WHERE id_produk = v_id_produk 
+        FOR UPDATE;
+
+        IF v_stok IS NULL THEN
+            ROLLBACK;
+            SELECT 'Gagal' AS status, CONCAT('Produk ID ', v_id_produk, ' tidak ditemukan!') AS pesan;
+            LEAVE main_block;
+            
+        ELSEIF v_stok < v_jumlah_beli THEN
+            ROLLBACK;
+            SELECT 'Gagal' AS status, CONCAT('Stok ', v_nama_produk, ' tidak cukup! Sisa: ', v_stok) AS pesan;
+            LEAVE main_block;
+        END IF;
+
+        SET v_total_tagihan = v_total_tagihan + (v_harga * v_jumlah_beli);
+
+        UPDATE produk SET stok = stok - v_jumlah_beli WHERE id_produk = v_id_produk;
+
+        UPDATE users SET saldo = saldo + (v_harga * v_jumlah_beli) WHERE id_user = v_id_penjual;
+
+        INSERT INTO detail_pesanan (id_pesanan, id_produk, jumlah) 
+        VALUES (v_id_pesanan, v_id_produk, v_jumlah_beli);
+
+        SET v_idx = v_idx + 1;
+    END WHILE;
+
+    IF v_saldo_pembeli < v_total_tagihan THEN
+        ROLLBACK;
+        SELECT 'Gagal' AS status, CONCAT('Saldo tidak cukup! Total tagihan seluruh keranjang Rp ', FORMAT(v_total_tagihan, 0)) AS pesan;
+        LEAVE main_block;
+    END IF;
+
+    UPDATE users SET saldo = saldo - v_total_tagihan WHERE id_user = p_id_pembeli;
+
+    COMMIT;
+    SELECT 'Berhasil' AS status, CONCAT('Berhasil checkout! Total belanja Rp ', FORMAT(v_total_tagihan, 0)) AS pesan;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `edit_produk` (IN `in_id_produk` INT, IN `in_nama` VARCHAR(100), IN `in_harga` INT, IN `in_stok` INT, IN `in_id_kategori` INT, IN `in_foto_barang` VARCHAR(255), IN `in_deskripsi` TEXT)   BEGIN
+	UPDATE `produk`
+	SET `nama`=in_nama, `harga`=in_harga, `stok`=in_stok, `id_kategori`=in_id_kategori, `foto_barang`=in_foto_barang, `deskripsi`=in_deskripsi
+	WHERE `id_produk`=in_id_produk;
+END$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `p_register_user` (IN `in_username` VARCHAR(50), IN `in_nama` VARCHAR(100), IN `in_password` VARCHAR(255), IN `in_role` ENUM('admin','penjual','pembeli'))   BEGIN
     DECLARE user_exists INT;
     
@@ -38,6 +124,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `p_register_user` (IN `in_username` 
         INSERT INTO users (username, nama, password, role, saldo)
         VALUES (in_username, in_nama, in_password, in_role, 0);
     END IF;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `tambah_produk` (IN `in_nama` VARCHAR(100), IN `in_harga` INT, IN `in_stok` INT, IN `in_id_user` INT, IN `in_id_kategori` INT, IN `in_foto_barang` VARCHAR(255), IN `in_deskripsi` TEXT)   BEGIN
+ 	INSERT INTO produk (nama, harga, stok, id_user, id_kategori, foto_barang, deskripsi)
+	VALUES (in_nama, in_harga, in_stok, in_id_user, in_id_kategori, in_foto_barang, in_deskripsi);
 END$$
 
 --
@@ -128,10 +219,13 @@ CREATE TABLE `detail_pesanan` (
 --
 
 INSERT INTO `detail_pesanan` (`id_detail`, `id_pesanan`, `id_produk`, `jumlah`) VALUES
-(1, 1, 1, 1),
 (2, 1, 2, 2),
 (3, 2, 4, 1),
-(4, 3, 5, 1);
+(4, 3, 5, 1),
+(5, 4, 9, 1),
+(6, 4, 4, 4),
+(16, 8, 5, 8),
+(17, 8, 27, 1);
 
 -- --------------------------------------------------------
 
@@ -200,7 +294,9 @@ CREATE TABLE `pesanan` (
 INSERT INTO `pesanan` (`id_pesanan`, `id_user`, `tanggal`) VALUES
 (1, 4, '2026-06-01 10:30:00'),
 (2, 5, '2026-06-02 14:15:00'),
-(3, 6, '2026-06-05 01:30:32');
+(3, 6, '2026-06-05 01:30:32'),
+(4, 4, '2026-06-05 15:16:49'),
+(8, 4, '2026-06-05 15:26:55');
 
 -- --------------------------------------------------------
 
@@ -224,11 +320,32 @@ CREATE TABLE `produk` (
 --
 
 INSERT INTO `produk` (`id_produk`, `id_user`, `nama`, `harga`, `stok`, `id_kategori`, `foto_barang`, `deskripsi`) VALUES
-(1, 2, 'Laptop Asus ROG Strix', 15000000, 10, 1, 'image.png', 'Laptop gaming Asus ROG Strix G15. Pemakaian baru 3 bulan, mulus no minus. Spesifikasi gahar siap rata kanan untuk semua game e-sports. Kelengkapan fullset (Box, Charger ori, Tas ROG).'),
-(2, 2, 'Mouse Wireless Logitech G304', 450000, 50, 3, 'image.png', 'Mouse gaming wireless dengan sensor HERO. Kecepatan respons 1ms. Daya tahan baterai sangat lama hingga 250 jam. Barang 100% baru dan original, garansi resmi Logitech Indonesia.'),
-(3, 3, 'iPhone 15 Pro Max', 20000000, 5, 2, 'image.png', 'iPhone 15 Pro Max kapasitas 256GB warna Natural Titanium. Ex garansi iBox, Battery Health 92%. Body mulus 98% selalu pakai case. True tone & Face ID on lancar jaya.'),
-(4, 3, 'TWS Soundcore R50i', 200000, 100, 3, 'image.png', 'Earphone bluetooth TWS dari Anker Soundcore. Bass mantap, daya tahan baterai hingga 30 jam dengan casing. Cocok untuk olahraga atau commute harian. Segel!'),
-(5, 2, 'Monitor LG 24 Inch IPS', 1500000, 14, 1, 'image.png', 'Monitor LG 24 inch panel IPS. Layar jernih, warna akurat cocok untuk desain maupun main game ringan. Minus pemakaian wajar, tidak ada dead pixel.');
+(2, 2, 'Mouse Wireless Logitech G304', 450000, 50, 3, 'default.png', 'Mouse gaming wireless dengan sensor HERO. Kecepatan respons 1ms. Daya tahan baterai sangat lama hingga 250 jam. Barang 100% baru dan original, garansi resmi Logitech Indonesia.'),
+(3, 3, 'iPhone 15 Pro Max', 20000000, 5, 2, 'default.png', 'iPhone 15 Pro Max kapasitas 256GB warna Natural Titanium. Ex garansi iBox, Battery Health 92%. Body mulus 98% selalu pakai case. True tone & Face ID on lancar jaya.'),
+(4, 3, 'TWS Soundcore R50i', 200000, 96, 3, 'default.png', 'Earphone bluetooth TWS dari Anker Soundcore. Bass mantap, daya tahan baterai hingga 30 jam dengan casing. Cocok untuk olahraga atau commute harian. Segel!'),
+(5, 2, 'Monitor LG 24 Inch', 1500000, 16, 1, '1780642805_b8515e4b80934702a7a7b01b00f8f6da.webp', 'Monitor LG 24 inch panel. Layar jernih, warna akurat cocok untuk desain maupun main game ringan. Minus pemakaian wajar, tidak ada dead pixel.'),
+(6, 2, 'Lenovo Legion 5 Pro', 22000000, 8, 1, 'default.png', 'Laptop gaming andalan dengan RTX 4060 dan layar WQHD+ 165Hz. Cocok untuk hardcore gamer dan content creator.'),
+(7, 3, 'Macbook Air M2 256GB Space Gray', 18500000, 15, 1, 'default.png', 'Laptop super tipis dan ringan dari Apple dengan chip M2. Baterai tahan seharian penuh untuk produktivitas maksimal.'),
+(8, 2, 'PC Rakitan Core i5 12400F', 8500000, 5, 1, 'default.png', 'PC Rakitan siap pakai untuk gaming mid-range. Sudah terinstall Windows 11, aplikasi standar, dan garansi part 1 tahun.'),
+(9, 3, 'SSD Samsung 980 PRO 1TB NVMe', 1800000, 29, 1, 'default.png', 'SSD PCIe 4.0 dengan kecepatan baca hingga 7000MB/s. Loading game jadi super cepat dan copy data hitungan detik.'),
+(10, 2, 'Samsung Galaxy S24 Ultra 512GB', 21000000, 12, 2, 'default.png', 'Smartphone flagship dengan fitur Galaxy AI, kamera utama 200MP, frame titanium, dan S Pen bawaan.'),
+(11, 3, 'iPad Pro M4 11-inch Wi-Fi 256GB', 19000000, 7, 2, 'default.png', 'Tablet paling mutakhir dari Apple dengan layar Ultra Retina XDR OLED dan chip M4 yang sangat bertenaga untuk render video.'),
+(12, 2, 'Xiaomi 14 12/256GB', 12000000, 20, 2, 'default.png', 'Flagship berukuran compact dengan lensa Leica otentik. Performa ngebut dengan chipset Snapdragon 8 Gen 3 terbaru.'),
+(13, 3, 'Poco X6 Pro 5G', 4500000, 45, 2, 'default.png', 'Ponsel mid-range killer. Menggunakan prosesor Dimensity 8300 Ultra, cocok banget buat gaming kompetitif tanpa frame drop.'),
+(14, 2, 'Keyboard Mechanical Keychron K2', 1350000, 25, 3, 'default.png', 'Keyboard mechanical wireless layout 75%. Menggunakan switch Gateron Brown yang tactile namun tidak berisik.'),
+(15, 3, 'Mouse Razer DeathAdder V3 Pro', 2200000, 10, 3, 'default.png', 'Mouse gaming wireless ultra ringan favorit atlet esports dunia. Menggunakan sensor optik presisi tinggi dan minim latensi.'),
+(16, 2, 'Headset Gaming HyperX Cloud II', 1200000, 18, 3, 'default.png', 'Headset gaming legendaris dengan 7.1 surround sound. Earpad memory foam yang sangat nyaman dipakai berjam-jam.'),
+(17, 3, 'Powerbank Anker PowerCore 20000mAh', 650000, 60, 3, 'default.png', 'Powerbank kapasitas besar dengan teknologi fast charging IQ. Port Type-C output tinggi, bisa untuk ngecas laptop darurat.'),
+(18, 2, 'Kamera Mirrorless Canon EOS R50', 12500000, 4, 4, 'default.png', 'Kamera mirrorless ringkas dan ringan, sangat cocok untuk pemula dan vlogger. Sudah termasuk lensa kit 18-45mm.'),
+(19, 3, 'Lensa Sony FE 50mm f/1.8', 3500000, 8, 4, 'default.png', 'Lensa fix wajib untuk pengguna sistem kamera Sony Full-Frame. Menghasilkan foto dengan efek bokeh yang mulus dan tajam.'),
+(20, 2, 'Drone DJI Mini 4 Pro', 15000000, 6, 4, 'default.png', 'Drone lipat super ringan di bawah 250 gram. Dilengkapi sensor anti nabrak omnidirectional dan mampu merekam 4K 60fps.'),
+(21, 3, 'Tripod Takara Rover 66', 450000, 35, 4, 'default.png', 'Tripod kokoh dengan bahan aluminium. Ballhead stabil dan salah satu kaki bisa dilepas untuk dijadikan monopod.'),
+(22, 2, 'Smart TV Samsung 43 Inch 4K UHD', 4200000, 12, 5, 'default.png', 'TV pintar dengan resolusi 4K yang memanjakan mata. Mendukung Netflix, YouTube, dan integrasi ekosistem SmartThings.'),
+(23, 3, 'AC Daikin Standard 1/2 PK', 3400000, 10, 5, 'default.png', 'AC hemat listrik, awet, dan cepat dingin. Sangat cocok untuk ukuran kamar tidur standar. Pemasangan mudah.'),
+(24, 2, 'Kulkas Sharp 2 Pintu Inverter', 3800000, 8, 5, 'default.png', 'Kulkas ukuran sedang dengan teknologi Plasmacluster untuk membunuh bakteri, dan kompresor inverter yang sangat hemat energi.'),
+(25, 3, 'Mesin Cuci LG Front Load 8kg', 5100000, 5, 5, 'default.png', 'Mesin cuci bukaan depan dengan teknologi AI DD. Pintar mendeteksi jenis kain agar mencuci lebih bersih namun tetap merawat pakaian.'),
+(26, 2, 'Laptop Advan Work Pro', 100000, 50, 1, '1780641477_telur.png', 'Laptop baut lepas, engsel mangap'),
+(27, 2, 'Laptop Advan Work Pro', 100000, 49, 1, 'default.png', 'Laptop baut lepas, engsel mangap');
 
 -- --------------------------------------------------------
 
@@ -252,9 +369,9 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id_user`, `username`, `nama`, `password`, `role`, `saldo`, `nama_toko`) VALUES
 (1, 'admin_zapiere', 'Admin Zapiere', 'admin123', 'admin', 0, ''),
-(2, 'andi_komputer', 'Andi Komputer', 'pass123', 'penjual', 5000000, 'Toko Komputer Jaya'),
-(3, 'ahmad_sobri', 'Ahmad Sobri', 'pass123', 'penjual', 2000000, 'Gadget Murah'),
-(4, 'abdul_buyer', 'Abdul', 'pass123', 'pembeli', 15000000, ''),
+(2, 'andi_komputer', 'Andi Komputer', 'pass123', 'penjual', 17100000, 'Toko Komputer Jaya'),
+(3, 'ahmad_sobri', 'Ahmad Sobri', 'pass123', 'penjual', 4600000, 'Gadget Murah'),
+(4, 'abdul_buyer', 'Abdul', 'pass123', 'pembeli', 300000, ''),
 (5, 'budi_buyer', 'Budi Santoso', 'pass123', 'pembeli', 500000, ''),
 (6, 'bach', 'Bachtiar Nugraha', 'bachtiarX24', 'pembeli', 0, '');
 
@@ -419,7 +536,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `detail_pesanan`
 --
 ALTER TABLE `detail_pesanan`
-  MODIFY `id_detail` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_detail` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `kategori`
@@ -437,13 +554,13 @@ ALTER TABLE `log_aktifitas`
 -- AUTO_INCREMENT for table `pesanan`
 --
 ALTER TABLE `pesanan`
-  MODIFY `id_pesanan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_pesanan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `produk`
 --
 ALTER TABLE `produk`
-  MODIFY `id_produk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_produk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `users`
