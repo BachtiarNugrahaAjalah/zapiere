@@ -89,3 +89,33 @@ function edit_product($id_produk, $nama_barang, $harga, $stok, $id_kategori, $fo
     $stmt->bind_param('isiiiss', $id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi);
     return $stmt->execute();
 }
+
+function get_ringkasan_produk(): array
+{
+    return db_all("SELECT * FROM ringkasan_produk ORDER BY nama_produk");
+}
+
+function get_produk_komputer(): array
+{
+    return db_all("SELECT * FROM produk_komputer ORDER BY nama");
+}
+
+function get_produk_handphone(): array
+{
+    return db_all("SELECT * FROM produk_handphone ORDER BY nama");
+}
+
+function get_produk_aksesoris(): array
+{
+    return db_all("SELECT * FROM produk_aksesoris ORDER BY nama");
+}
+
+function get_produk_kamera(): array
+{
+    return db_all("SELECT * FROM produk_kamera ORDER BY nama");
+}
+
+function get_produk_prt(): array
+{
+    return db_all("SELECT * FROM produk_prt ORDER BY nama");
+}
