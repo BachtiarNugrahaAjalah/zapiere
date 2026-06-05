@@ -51,7 +51,7 @@ function zapiere_pembeli_page_start(string $title, string $active): void
             .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         </style>
     </head>
-    <body class="bg-gray-100 text-[#0a0a0a] font-sans antialiased min-h-screen flex flex-col relative">
+    <body class="bg-gray-100 text-[#0a0a0a] font-sans antialiased min-h-screen flex flex-col relative overflow-x-hidden">
 
     <nav class="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

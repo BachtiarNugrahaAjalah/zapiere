@@ -61,9 +61,21 @@ zapiere_page_start('Dashboard Admin', 'admin', 'dashboard', 'Ringkasan operasion
             Buka Simulasi
         </a>
     </div>
+
+    <div class="flex flex-col justify-between rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
+        <div>
+            <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#545677]">Manajemen Data</p>
+            <h2 class="mt-2 text-2xl font-black">Backup Sistem</h2>
+            <p class="mt-3 text-sm leading-6 text-slate-600">Backup secara manual atau otomatis agar data aman.</p>
+        </div>
+        <a href="<?= e(url_for('views/admin/backup_sistem.php')) ?>" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[#011C27] bg-transparent px-5 py-3 text-sm font-black text-[#011C27] transition hover:bg-slate-50">
+            <i data-lucide="database-backup" class="h-5 w-5"></i>
+            Kelola Backup
+        </a>
+    </div>
 </section>
 
-<section class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+<section class="mt-6">
 
     <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

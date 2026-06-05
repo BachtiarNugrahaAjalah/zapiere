@@ -121,7 +121,7 @@ zapiere_pembeli_page_start('Profil Saya', 'profil');
         </a>
     </div>
 
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6 min-w-0">
 
         <div class="grid gap-4 sm:grid-cols-3">
             <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col justify-between">
@@ -167,8 +167,8 @@ zapiere_pembeli_page_start('Profil Saya', 'profil');
                         <i class="<?= $icon ?> text-lg"></i>
                     </div>
                     <div class="flex flex-1 items-center justify-between gap-4 min-w-0">
-                        <span class="text-sm font-semibold text-[#545677]"><?= e($label) ?></span>
-                        <span class="text-sm font-extrabold text-[#011C27] text-right"><?= e($value) ?></span>
+                        <span class="text-sm font-semibold text-[#545677] flex-shrink-0"><?= e($label) ?></span>
+                        <span class="text-sm font-extrabold text-[#011C27] text-right truncate"><?= e($value) ?></span>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -187,8 +187,8 @@ zapiere_pembeli_page_start('Profil Saya', 'profil');
             <div class="divide-y divide-gray-50">
                 <?php foreach (array_slice($orders, 0, 3) as $order): ?>
                 <div class="flex items-center justify-between gap-4 px-6 py-4">
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-bold text-[#011C27]"><?= e($order['produk'] ?? 'Pesanan #' . $order['id_pesanan']) ?></p>
+                    <div class="flex-1 min-w-0">
+                        <p class="truncate text-sm font-bold text-[#011C27] max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg" title="<?= e($order['produk'] ?? 'Pesanan #' . $order['id_pesanan']) ?>"><?= e($order['produk'] ?? 'Pesanan #' . $order['id_pesanan']) ?></p>
                         <p class="mt-0.5 text-xs text-[#545677]"><?= e($order['tanggal'] ?? '-') ?></p>
                     </div>
                     <p class="flex-shrink-0 text-sm font-extrabold text-[#011C27]">
