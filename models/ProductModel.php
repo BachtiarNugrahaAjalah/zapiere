@@ -133,3 +133,33 @@ function get_smart_recommendation()
         WHERE harga >= 15000000
     ");
 }
+
+function get_ringkasan_produk(): array
+{
+    return db_all("SELECT * FROM ringkasan_produk ORDER BY nama_produk");
+}
+
+function get_produk_komputer(): array
+{
+    return db_all("SELECT * FROM produk_komputer ORDER BY nama");
+}
+
+function get_produk_handphone(): array
+{
+    return db_all("SELECT * FROM produk_handphone ORDER BY nama");
+}
+
+function get_produk_aksesoris(): array
+{
+    return db_all("SELECT * FROM produk_aksesoris ORDER BY nama");
+}
+
+function get_produk_kamera(): array
+{
+    return db_all("SELECT * FROM produk_kamera ORDER BY nama");
+}
+
+function get_produk_prt(): array
+{
+    return db_all("SELECT * FROM produk_prt ORDER BY nama");
+}
