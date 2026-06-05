@@ -1,13 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-/**
- * Mengambil produk beserta meta (kategori, penjual, total_terjual, omzet).
- * Menggunakan VIEW `v_produk_lengkap` dari database.
- *
- * @param int|null $sellerId  Filter berdasarkan id_user penjual (opsional)
- * @param int|null $limit     Batasi jumlah baris yang dikembalikan (opsional)
- */
 function products_with_meta(?int $sellerId = null, ?int $limit = null): array
 {
     $where = '';
@@ -26,9 +19,6 @@ function products_with_meta(?int $sellerId = null, ?int $limit = null): array
     ");
 }
 
-/**
- * Mengambil baris penjualan (item terjual) untuk spesifik penjual.
- */
 function sales_rows(int $sellerId): array
 {
     return db_all("
@@ -39,13 +29,6 @@ function sales_rows(int $sellerId): array
     ");
 }
 
-/**
- * Memastikan produk memiliki gambar yang valid dan mengembalikan URL-nya.
- * Jika file tidak ada atau string kosong, akan difallback ke image.png default.
- *
- * @param array $product Array asosiatif data produk.
- * @return string URL gambar yang valid.
- */
 function product_image_url(array $product): string
 {
     $file = $product['foto_barang'] ?? 'image.png';
@@ -58,12 +41,17 @@ function product_image_url(array $product): string
     return asset_url('assets/images/' . $file);
 }
 
-/**
- * Mengecek apakah stok produk masih tersedia (lebih dari 0).
- * Memanggil langsung SQL Stored Function `f_cek_stok_tersedia`.
- */
 function check_stock(int $productId): bool
 {
     return (bool) db_value("SELECT f_cek_stok_tersedia({$productId})");
 }
 
+function get_all_data_produk(?int $sellerId = null) {
+    $where = $sellerId !== null ? "WHERE p.id_user = {$sellerId}" : '';
+    return db_all("
+        SELECT p.*, u.nama as penjual, k.nama as kategori FROM produk p 
+        RIGHT JOIN users u ON p.id_user = u.id_user
+        RIGHT JOIN kategori k ON p.id_kategori = k.id_kategori
+        {$where}
+    ");
+}

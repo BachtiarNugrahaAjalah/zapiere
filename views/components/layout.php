@@ -1,10 +1,11 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/session_guard.php';
 require_once __DIR__ . '/sidebar.php';
 
 function zapiere_page_start($title, $role, $active, $subtitle = '')
 {
-    $user = current_user($role);
+    $user = require_role($role);
     ?>
     <!DOCTYPE html>
     <html lang="id">

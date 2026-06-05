@@ -2,6 +2,11 @@
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/models/UserModel.php';
 
+if (!empty($_SESSION['zapiere_user'])) {
+    header('Location: ' . dashboard_url_for_role($_SESSION['zapiere_user']['role']));
+    exit;
+}
+
 $error = '';
 $success = '';
 
@@ -9,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $nama = trim($_POST['nama'] ?? '');
     $password = $_POST['password'] ?? '';
-    $role = $_POST['role'] ?? 'pembeli'; // default
+    $role = $_POST['role'] ?? 'pembeli';
 
     if ($username && $nama && $password) {
         $result = register_user($username, $nama, $password, $role);

@@ -1,8 +1,12 @@
 <?php
 require_once __DIR__ . '/../components/layout.php';
+require_once __DIR__ . '/../../models/UserModel.php';
+require_once __DIR__ . '/../../models/ProductModel.php';
+require_once __DIR__ . '/../../models/InfraModel.php';
 
-$user = current_user('penjual');
-$sellerId = (int) ($user['id_user'] ?? 2);
+$user = require_role('penjual');
+$sellerId = (int) $user['id_user'];
+
 $products = products_with_meta($sellerId);
 $sales = sales_rows($sellerId);
 $fragments = fragments_data();
@@ -12,6 +16,10 @@ $revenueRp = $sellerStats['total_omzet_rp'];
 $stock = array_sum(array_map(fn($product) => (int) $product['stok'], $products));
 $sold = array_sum(array_map(fn($product) => (int) $product['total_terjual'], $products));
 $lowStock = array_values(array_filter($products, fn($product) => (int) $product['stok'] <= 10));
+
+$sortedByStock = $products;
+usort($sortedByStock, fn($a, $b) => (int) $a['stok'] <=> (int) $b['stok']);
+$lowStockTop4 = array_slice($sortedByStock, 0, 4);
 
 zapiere_page_start('Dashboard Penjual', 'penjual', 'dashboard', 'Pantau produk, stok, dan pesanan toko elektronikmu.');
 ?>
@@ -25,43 +33,32 @@ zapiere_page_start('Dashboard Penjual', 'penjual', 'dashboard', 'Pantau produk, 
 
 <section class="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
     <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#545677]">Inventori</p>
-                <h2 class="mt-2 text-2xl font-black">Produk elektronik toko</h2>
-            </div>
-            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#011C27] px-5 py-3 text-sm font-black text-white transition hover:bg-[#03254E]">
-                <i data-lucide="plus" class="h-5 w-5"></i>
-                Tambah Produk
-            </button>
+        <div>
+            <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#545677]">Inventori</p>
+            <h2 class="mt-2 text-2xl font-black">Stok paling rendah</h2>
         </div>
 
         <div class="mt-6 overflow-hidden rounded-lg border border-slate-200">
-            <div class="hidden grid-cols-[1.4fr_0.8fr_0.6fr_0.8fr] bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#545677] md:grid">
-                <span>Produk</span>
+            <div class="grid grid-cols-[2fr_0.9fr_0.5fr] bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#545677]">
+                <span>Nama Produk</span>
                 <span>Kategori</span>
                 <span>Stok</span>
-                <span>Harga</span>
             </div>
             <div class="divide-y divide-slate-200">
-                <?php foreach ($products as $product): ?>
-                    <div class="grid gap-3 px-4 py-4 md:grid-cols-[1.4fr_0.8fr_0.6fr_0.8fr] md:items-center">
-                        <div class="flex items-center gap-3">
-                            <img src="<?= e(product_image_url($product)) ?>" alt="<?= e($product['nama']) ?>" class="h-14 w-14 rounded-lg bg-slate-950 object-contain">
-                            <div class="min-w-0">
-                                <p class="truncate font-black"><?= e($product['nama']) ?></p>
-                                <p class="mt-1 text-xs font-semibold text-[#545677]"><?= e($product['total_terjual']) ?> terjual</p>
-                            </div>
+                <?php foreach ($lowStockTop4 as $product): ?>
+                    <div class="grid grid-cols-[2fr_0.9fr_0.5fr] items-center px-4 py-3 gap-2">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <img src="<?= e(product_image_url($product)) ?>" alt="<?= e($product['nama']) ?>" class="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 object-contain">
+                            <p class="truncate text-sm font-black"><?= e($product['nama']) ?></p>
                         </div>
-                        <p class="text-sm font-semibold text-[#545677]"><?= e($product['kategori']) ?></p>
+                        <p class="text-sm font-semibold text-[#545677] truncate"><?= e($product['kategori']) ?></p>
                         <div>
                             <?php if ((int) $product['stok'] <= 10): ?>
-                                <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700"><?= e($product['stok']) ?> unit</span>
+                                <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700"><?= e($product['stok']) ?></span>
                             <?php else: ?>
-                                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700"><?= e($product['stok']) ?> unit</span>
+                                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700"><?= e($product['stok']) ?></span>
                             <?php endif; ?>
                         </div>
-                        <p class="text-sm font-black"><?= e($product['harga_rp'] ?? 'Rp ' . $product['harga']) ?></p>
                     </div>
                 <?php endforeach; ?>
             </div>

@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/../components/layout.php';
+require_once __DIR__ . '/../../models/InfraModel.php';
+
+require_role('admin');
 
 $nodes = nodes_data();
 $fragments = fragments_data();

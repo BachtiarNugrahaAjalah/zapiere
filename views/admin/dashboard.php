@@ -1,5 +1,12 @@
 <?php
 require_once __DIR__ . '/../components/layout.php';
+require_once __DIR__ . '/../../models/UserModel.php';
+require_once __DIR__ . '/../../models/ProductModel.php';
+require_once __DIR__ . '/../../models/OrderModel.php';
+require_once __DIR__ . '/../../models/InfraModel.php';
+require_once __DIR__ . '/../../models/LogModel.php';
+
+require_role('admin');
 
 $products = products_with_meta();
 $orders = orders_with_total();

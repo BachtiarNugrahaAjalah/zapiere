@@ -1,9 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-/**
- * Mengambil semua data user dari database.
- */
 function users_data()
 {
     return db_all("SELECT * FROM users ORDER BY id_user");
@@ -27,9 +24,6 @@ function current_user($defaultRole = 'admin')
     ];
 }
 
-/**
- * Menyimpan data user ke dalam session.
- */
 function set_current_user(array $user): void
 {
     $_SESSION['zapiere_user'] = [
@@ -41,19 +35,11 @@ function set_current_user(array $user): void
     ];
 }
 
-/**
- * Mengambil statistik total belanja seorang pembeli.
- * Memanggil langsung SQL Stored Function `f_total_belanja`.
- */
 function get_buyer_total_spent(int $buyerId): int
 {
     return (int) db_value("SELECT f_total_belanja({$buyerId})");
 }
 
-/**
- * Mengambil statistik total omzet dan jumlah produk seorang penjual.
- * Memanggil langsung SQL Stored Functions.
- */
 function get_seller_stats(int $sellerId): array
 {
     $row = db_one("
@@ -65,15 +51,6 @@ function get_seller_stats(int $sellerId): array
     return $row ?: ['total_omzet_rp' => 'Rp 0', 'total_produk' => 0];
 }
 
-/**
- * Mendaftarkan pengguna baru dengan memanggil Stored Procedure SQL p_register_user.
- *
- * @param string $username
- * @param string $nama
- * @param string $password
- * @param string $role (admin|penjual|pembeli)
- * @return array Berisi status boolean dan pesan string.
- */
 function register_user(string $username, string $nama, string $password, string $role): array
 {
     $username = db_escape($username);
@@ -95,12 +72,6 @@ function register_user(string $username, string $nama, string $password, string 
     return ['success' => false, 'message' => mysqli_error($conn)];
 }
 
-/**
- * Mengembalikan URL dashboard yang tepat sesuai dengan level akses pengguna.
- *
- * @param string $role Peran pengguna (admin, penjual, pembeli).
- * @return string URL absolut ke halaman dashboard yang sesuai.
- */
 function dashboard_url_for_role(string $role): string
 {
     $map = [
