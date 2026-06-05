@@ -11,6 +11,7 @@ function zapiere_nav_items($role)
         'penjual' => [
             ['key' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'layout-dashboard', 'href' => 'views/penjual/dashboard.php'],
             ['key' => 'kelola', 'label' => 'Kelola Produk', 'icon' => 'package', 'href' => 'views/penjual/kelola_produk.php'],
+            ['key' => 'lacak', 'label' => 'Performa Produk', 'icon' => 'bar-chart-2', 'href' => 'views/penjual/lacak_produk.php'],
             ['key' => 'riwayat', 'label' => 'Riwayat Penjualan', 'icon' => 'receipt-text', 'href' => 'views/penjual/riwayat_penjualan.php'],
             ['key' => 'profil', 'label' => 'Profil Toko', 'icon' => 'store', 'href' => 'views/penjual/profil.php'],
         ],

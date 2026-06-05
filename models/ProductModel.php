@@ -78,9 +78,25 @@ function checkout($idPembeli, $jsonCartData) {
 
 function add_product($nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi) {
     global $conn;
-    $stmt = $conn->prepare("CALL tambah_produk(?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("CALL posting_produk(?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param('siiiiss', $nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi);
-    return $stmt->execute();
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        return ['success' => false, 'message' => 'Gagal mengeksekusi prosedur tambah produk.'];
+    }
+    
+    $res = mysqli_stmt_get_result($stmt);
+    if ($res) {
+        $row = mysqli_fetch_assoc($res);
+        if ($row && $row['status'] === 'Berhasil') {
+            return ['success' => true, 'message' => $row['pesan']];
+        } else {
+            $msg = $row['pesan'] ?? 'Terjadi kesalahan saat menambah produk.';
+            return ['success' => false, 'message' => $msg];
+        }
+    } else {
+        return ['success' => false, 'message' => 'Tidak ada respon dari server.'];
+    }
 }
 
 function edit_product($id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi) {
