@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 05, 2026 at 12:05 PM
+-- Generation Time: Jun 05, 2026 at 01:40 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.3.26
 
@@ -109,6 +109,32 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `edit_produk` (IN `in_id_produk` INT
 	UPDATE `produk`
 	SET `nama`=in_nama, `harga`=in_harga, `stok`=in_stok, `id_kategori`=in_id_kategori, `foto_barang`=in_foto_barang, `deskripsi`=in_deskripsi
 	WHERE `id_produk`=in_id_produk;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `posting_produk` (IN `in_nama` VARCHAR(100), IN `in_harga` INT, IN `in_stok` INT, IN `in_id_user` INT, IN `in_id_kategori` INT, IN `in_foto_barang` VARCHAR(255), IN `in_deskripsi` TEXT)   BEGIN
+	DECLARE v_saldo INT;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+    BEGIN
+        ROLLBACK;
+        SELECT 'Gagal' AS status, 'Terjadi kesalahan sistem (Database Error).' AS pesan;
+    END;
+
+	START TRANSACTION;
+    
+	SELECT saldo INTO v_saldo FROM users WHERE id_user = in_id_user
+	FOR UPDATE;
+    
+    IF v_saldo < (in_harga * 0.1) THEN
+    	ROLLBACK;
+        SELECT 'Gagal' AS status, 'Saldo tidak cukup untuk membayar pajak, minimal 10% dari harga barang!' AS pesan;
+    ELSE
+    	CALL tambah_produk(in_nama, in_harga, in_stok, in_id_user, in_id_kategori, in_foto_barang, in_deskripsi);
+        UPDATE users SET saldo = saldo - (in_harga * 0.1) WHERE id_user = in_id_user;
+        
+       	COMMIT;
+        SELECT 'Berhasil' AS status, 'Produk berhasil ditambahkan' AS pesan;
+    END IF;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `p_register_user` (IN `in_username` VARCHAR(50), IN `in_nama` VARCHAR(100), IN `in_password` VARCHAR(255), IN `in_role` ENUM('admin','penjual','pembeli'))   BEGIN
@@ -257,7 +283,8 @@ INSERT INTO `detail_pesanan` (`id_detail`, `id_pesanan`, `id_produk`, `jumlah`) 
 (5, 4, 9, 1),
 (6, 4, 4, 4),
 (16, 8, 5, 8),
-(17, 8, 27, 1);
+(17, 8, 27, 1),
+(19, 12, 6, 3);
 
 -- --------------------------------------------------------
 
@@ -309,7 +336,13 @@ INSERT INTO `log_aktifitas` (`id_log`, `id_user`, `keterangan`, `tgl_aktifitas`)
 (10, 2, 'Top-up saldo Rp 50000', '2026-06-05 17:39:19'),
 (11, 7, 'Top-up saldo Rp 10000', '2026-06-05 17:47:28'),
 (12, NULL, 'Memperbarui Informasi Produk: PC Rakitan Core i5 12400F', '2026-06-05 18:08:46'),
-(13, NULL, 'Memperbarui Informasi Produk: Xiaomi 14 12/256GB', '2026-06-05 18:08:53');
+(13, NULL, 'Memperbarui Informasi Produk: Xiaomi 14 12/256GB', '2026-06-05 18:08:53'),
+(14, 4, 'Top-up saldo Rp 100000', '2026-06-05 19:37:39'),
+(15, 4, 'Top-up saldo Rp 100000000', '2026-06-05 19:42:53'),
+(16, NULL, 'Melakukan Pembelian Produk. ID Pesanan: 12', '2026-06-05 19:47:51'),
+(17, NULL, 'Memperbarui Informasi Produk: Lenovo Legion 5 Pro', '2026-06-05 19:47:51'),
+(18, 8, 'Top-up saldo Rp 500000', '2026-06-05 20:14:30'),
+(19, NULL, 'Menambahkan Produk Baru: Laptop Advan WorkPro', '2026-06-05 20:14:56');
 
 -- --------------------------------------------------------
 
@@ -332,7 +365,8 @@ INSERT INTO `pesanan` (`id_pesanan`, `id_user`, `tanggal`) VALUES
 (2, 5, '2026-06-02 14:15:00'),
 (3, 6, '2026-06-05 01:30:32'),
 (4, 4, '2026-06-05 15:16:49'),
-(8, 4, '2026-06-05 15:26:55');
+(8, 4, '2026-06-05 15:26:55'),
+(12, 4, '2026-06-05 19:47:51');
 
 --
 -- Triggers `pesanan`
@@ -374,7 +408,7 @@ INSERT INTO `produk` (`id_produk`, `id_user`, `nama`, `harga`, `stok`, `id_kateg
 (3, 3, 'iPhone 15 Pro Max', 20000000, 5, 2, 'default.png', 'iPhone 15 Pro Max kapasitas 256GB warna Natural Titanium. Ex garansi iBox, Battery Health 92%. Body mulus 98% selalu pakai case. True tone & Face ID on lancar jaya.'),
 (4, 3, 'TWS Soundcore R50i', 200000, 96, 3, 'default.png', 'Earphone bluetooth TWS dari Anker Soundcore. Bass mantap, daya tahan baterai hingga 30 jam dengan casing. Cocok untuk olahraga atau commute harian. Segel!'),
 (5, 2, 'Monitor LG 24 Inch', 1500000, 16, 1, '1780642805_b8515e4b80934702a7a7b01b00f8f6da.webp', 'Monitor LG 24 inch panel. Layar jernih, warna akurat cocok untuk desain maupun main game ringan. Minus pemakaian wajar, tidak ada dead pixel.'),
-(6, 2, 'Lenovo Legion 5 Pro', 22000000, 8, 1, 'default.png', 'Laptop gaming andalan dengan RTX 4060 dan layar WQHD+ 165Hz. Cocok untuk hardcore gamer dan content creator.'),
+(6, 2, 'Lenovo Legion 5 Pro', 22000000, 5, 1, 'default.png', 'Laptop gaming andalan dengan RTX 4060 dan layar WQHD+ 165Hz. Cocok untuk hardcore gamer dan content creator.'),
 (7, 3, 'Macbook Air M2 256GB Space Gray', 18500000, 15, 1, 'default.png', 'Laptop super tipis dan ringan dari Apple dengan chip M2. Baterai tahan seharian penuh untuk produktivitas maksimal.'),
 (8, 2, 'PC Rakitan Core i5 12400F', 8500000, 2, 1, 'default.png', 'PC Rakitan siap pakai untuk gaming mid-range. Sudah terinstall Windows 11, aplikasi standar, dan garansi part 1 tahun.'),
 (9, 3, 'SSD Samsung 980 PRO 1TB NVMe', 1800000, 29, 1, 'default.png', 'SSD PCIe 4.0 dengan kecepatan baca hingga 7000MB/s. Loading game jadi super cepat dan copy data hitungan detik.'),
@@ -395,7 +429,8 @@ INSERT INTO `produk` (`id_produk`, `id_user`, `nama`, `harga`, `stok`, `id_kateg
 (24, 2, 'Kulkas Sharp 2 Pintu Inverter', 3800000, 8, 5, 'default.png', 'Kulkas ukuran sedang dengan teknologi Plasmacluster untuk membunuh bakteri, dan kompresor inverter yang sangat hemat energi.'),
 (25, 3, 'Mesin Cuci LG Front Load 8kg', 5100000, 5, 5, 'default.png', 'Mesin cuci bukaan depan dengan teknologi AI DD. Pintar mendeteksi jenis kain agar mencuci lebih bersih namun tetap merawat pakaian.'),
 (26, 2, 'Laptop Advan Work Pro', 100000, 50, 1, '1780641477_telur.png', 'Laptop baut lepas, engsel mangap'),
-(27, 2, 'Laptop Advan Work Pro', 100000, 49, 1, 'default.png', 'Laptop baut lepas, engsel mangap');
+(27, 2, 'Laptop Advan Work Pro', 100000, 49, 1, 'default.png', 'Laptop baut lepas, engsel mangap'),
+(28, 8, 'Laptop Advan WorkPro', 5000000, 10, 1, '1780665296_images.jpg', 'Laptop baut sering copot, engsel kendor, keyboard pada mati, speaker rusak');
 
 --
 -- Triggers `produk`
@@ -453,12 +488,13 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id_user`, `username`, `nama`, `password`, `role`, `saldo`, `nama_toko`) VALUES
 (1, 'admin_zapiere', 'Admin Zapiere', 'admin123', 'admin', 0, ''),
-(2, 'andi_komputer', 'Andi Komputer', 'pass123', 'penjual', 17150000, 'Toko Komputer Jaya'),
+(2, 'andi_komputer', 'Andi Komputer', 'pass123', 'penjual', 83150000, 'Toko Komputer Jaya'),
 (3, 'ahmad_sobri', 'Ahmad Sobri', 'pass123', 'penjual', 4600000, 'Gadget Murah'),
-(4, 'abdul_buyer', 'Abdul', 'pass123', 'pembeli', 300000, ''),
+(4, 'abdul_buyer', 'Abdul', 'pass123', 'pembeli', 34400000, ''),
 (5, 'budi_buyer', 'Budi Santoso', 'pass123', 'pembeli', 500000, ''),
 (6, 'bach', 'Bachtiar Nugraha', 'bachtiarX24', 'pembeli', 0, ''),
-(7, 'rara', 'rara ya', '111111', 'pembeli', 10000, '');
+(7, 'rara', 'rara ya', '111111', 'pembeli', 10000, ''),
+(8, 'kere', 'Penjual Kere', '123456', 'penjual', 0, '');
 
 -- --------------------------------------------------------
 
@@ -620,7 +656,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `detail_pesanan`
 --
 ALTER TABLE `detail_pesanan`
-  MODIFY `id_detail` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id_detail` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `kategori`
@@ -632,25 +668,25 @@ ALTER TABLE `kategori`
 -- AUTO_INCREMENT for table `log_aktifitas`
 --
 ALTER TABLE `log_aktifitas`
-  MODIFY `id_log` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_log` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `pesanan`
 --
 ALTER TABLE `pesanan`
-  MODIFY `id_pesanan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_pesanan` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `produk`
 --
 ALTER TABLE `produk`
-  MODIFY `id_produk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id_produk` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id_user` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_user` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables

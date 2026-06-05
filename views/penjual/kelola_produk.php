@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_action'])) {
         if ($idProduk > 0) {
             $check = db_one("SELECT id_produk FROM produk WHERE id_produk = {$idProduk} AND id_user = {$sellerId}");
             if ($check) {
-                if (db_exec("DELETE FROM produk WHERE id_produk = {$idProduk} AND id_user = {$sellerId}")) {
+                if (db_exec("CALL hapus_produk({$idProduk})")) {
                     $_SESSION['toast'] = ['title' => 'Berhasil', 'msg' => 'Produk berhasil dihapus.', 'ok' => true];
                 } else {
                     $_SESSION['toast'] = ['title' => 'Gagal', 'msg' => 'Gagal menghapus produk.', 'ok' => false];

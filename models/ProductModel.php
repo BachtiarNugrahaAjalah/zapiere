@@ -45,13 +45,16 @@ function check_stock(int $productId): bool
 
 function get_all_data_produk(?int $sellerId = null)
 {
-    $where = $sellerId !== null ? "WHERE p.id_user = {$sellerId}" : '';
-    return db_all("
-        SELECT p.*, u.nama as penjual, k.nama as kategori FROM produk p 
-        INNER JOIN users u ON p.id_user = u.id_user
-        INNER JOIN kategori k ON p.id_kategori = k.id_kategori
-        {$where}
-    ");
+    if ($sellerId !== null) {
+        return db_all("
+            SELECT p.*, u.nama as penjual, k.nama as kategori FROM produk p 
+            INNER JOIN users u ON p.id_user = u.id_user
+            INNER JOIN kategori k ON p.id_kategori = k.id_kategori
+            WHERE p.id_user = {$sellerId}
+        ");
+    }
+    
+    return db_all("CALL tampil_produk");
 }
 
 function checkout(int $idPembeli,string $jsonCartData)
@@ -84,6 +87,9 @@ function add_product($nama_barang, $harga, $stok, $id_penjual, $id_kategori, $fo
     /** @var mysqli $conn */
     global $conn;
     $stmt = $conn->prepare("CALL posting_produk(?, ?, ?, ?, ?, ?, ?)");
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . mysqli_error($conn));
+    }
     $stmt->bind_param('siiiiss', $nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi);
 
     if (!mysqli_stmt_execute($stmt)) {

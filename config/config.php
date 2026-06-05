@@ -50,7 +50,15 @@ function db_all($sql)
         return [];
     }
 
-    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    
+    while (mysqli_more_results($conn) && mysqli_next_result($conn)) {
+        if ($extraResult = mysqli_store_result($conn)) {
+            mysqli_free_result($extraResult);
+        }
+    }
+
+    return $data;
 }
 
 function db_one($sql)

@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <section class="hidden bg-[#011C27] p-10 lg:flex lg:items-center">
             <div class="mx-auto max-w-lg">
                 <div class="rounded-lg bg-white p-6 shadow-2xl">
-                    <img src="<?= e(asset_url('assets/images/image.png')) ?>" alt="Laptop elektronik Zapiere" class="aspect-[4/3] w-full rounded-lg object-contain bg-slate-950">
+                    <img src="<?= e(asset_url('assets/images/default.png')) ?>" alt="Laptop elektronik Zapiere" class="aspect-[4/3] w-full rounded-lg object-contain bg-slate-950">
                 </div>
                 <div class="mt-8 grid grid-cols-3 gap-3">
                     <div class="rounded-lg bg-white/10 p-4 text-white">
