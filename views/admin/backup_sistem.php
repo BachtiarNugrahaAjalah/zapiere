@@ -20,10 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $action_status = 'error';
             }
         } elseif ($_POST['action'] === 'enable_auto') {
-            $cmd = "schtasks /create /tn \"ZapiereAutoBackup\" /tr \"$batPath\" /sc daily /st 00:00 /f";
+            $backup_time = $_POST['backup_time'] ?? '00:00';
+            if (!preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $backup_time)) {
+                $backup_time = '00:00';
+            }
+            $cmd = "schtasks /create /tn \"ZapiereAutoBackup\" /tr \"$batPath\" /sc daily /st {$backup_time} /f";
             exec($cmd, $output, $return_var);
             if ($return_var === 0) {
-                $action_message = "Auto backup berhasil diaktifkan (Jadwal: Setiap hari jam 00:00)!";
+                $action_message = "Auto backup berhasil diaktifkan (Jadwal: Setiap hari jam {$backup_time})!";
                 $action_status = 'success';
             } else {
                 $action_message = "Gagal mengaktifkan auto backup.";
@@ -82,16 +86,17 @@ zapiere_page_start('Backup Sistem', 'admin', 'backup', 'Monitoring backup, repli
                 <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#545677]">Backup Jobs</p>
                 <h2 class="mt-2 text-2xl font-black">Snapshot dan replikasi terakhir</h2>
             </div>
-            <form method="POST" class="flex flex-col gap-2 sm:flex-row">
+            <form method="POST" class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <?php if ($auto_active): ?>
                     <button type="submit" name="action" value="disable_auto" class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-black text-red-600 transition hover:bg-red-100">
                         <i data-lucide="x-circle" class="h-5 w-5"></i>
                         Matikan Auto Backup
                     </button>
                 <?php else: ?>
-                    <button type="submit" name="action" value="enable_auto" class="inline-flex items-center justify-center gap-2 rounded-lg border border-[#011C27]/10 bg-slate-50 px-5 py-3 text-sm font-black text-[#011C27] transition hover:bg-slate-100">
+                    <input type="time" name="backup_time" value="00:00" class="h-11 rounded-lg border border-slate-200 px-3 text-sm font-black text-[#011C27] focus:border-[#011C27] focus:outline-none focus:ring-1 focus:ring-[#011C27]" required title="Pilih waktu backup">
+                    <button type="submit" name="action" value="enable_auto" class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#011C27]/10 bg-slate-50 px-5 text-sm font-black text-[#011C27] transition hover:bg-slate-100">
                         <i data-lucide="clock" class="h-5 w-5"></i>
-                        Auto Backup (00:00)
+                        Set Auto Backup
                     </button>
                 <?php endif; ?>
                 <button type="submit" name="action" value="backup_now" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#011C27] px-5 py-3 text-sm font-black text-white transition hover:bg-[#03254E]">

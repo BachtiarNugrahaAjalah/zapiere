@@ -38,42 +38,6 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
         </div>
     </div>
 
-    <div>
-        <div class="flex items-center gap-2 mb-4 border-l-4 border-zDark pl-2">
-            <h3 class="font-bold text-zDark text-lg">Kategori Pilihan</h3>
-        </div>
-        <div class="overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div class="flex gap-3 sm:gap-4 w-max">
-                <button
-                    onclick="setCategory(0)"
-                    data-kat="0"
-                    class="kat-btn w-[85px] h-[90px] sm:w-[95px] sm:h-[100px] flex flex-col items-center justify-center gap-2 rounded-2xl border transition-all duration-300 flex-shrink-0 <?= $activeKat === 0 ? 'bg-zBlush/40 border-zDark text-zDark shadow-sm' : 'bg-white border-gray-200 text-zSlate hover:border-zPink hover:text-zDark hover:bg-gray-50' ?>">
-                    <i class="ph-light ph-squares-four text-3xl sm:text-4xl mb-0.5"></i>
-                    <span class="text-[10px] sm:text-xs font-semibold text-center leading-tight tracking-wide">Semua</span>
-                </button>
-                <?php foreach ($kategoriList as $kat): ?>
-                <button
-                    onclick="setCategory(<?= (int)$kat['id_kategori'] ?>)"
-                    data-kat="<?= (int)$kat['id_kategori'] ?>"
-                    class="kat-btn w-[85px] h-[90px] sm:w-[95px] sm:h-[100px] flex flex-col items-center justify-center gap-2 rounded-2xl border transition-all duration-300 flex-shrink-0 <?= $activeKat === (int)$kat['id_kategori'] ? 'bg-zBlush/40 border-zDark text-zDark shadow-sm' : 'bg-white border-gray-200 text-zSlate hover:border-zPink hover:text-zDark hover:bg-gray-50' ?>">
-                    <?php
-                        $katIcons = [
-                            1 => 'ph-laptop',
-                            2 => 'ph-device-mobile',
-                            3 => 'ph-mouse',
-                            4 => 'ph-camera',
-                            5 => 'ph-cooking-pot',
-                        ];
-                        $icon = $katIcons[$kat['id_kategori']] ?? 'ph-tag';
-                    ?>
-                    <i class="ph-light <?= $icon ?> text-3xl sm:text-4xl mb-0.5"></i>
-                    <span class="text-[10px] sm:text-xs font-semibold text-center leading-tight tracking-wide"><?= e($kat['nama']) ?></span>
-                </button>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-
     <?php if (!empty($recommendations)): ?>
     <div class="mb-10 rounded-2xl bg-[#011C27] p-6 shadow-xl">
         <div class="mb-5">
@@ -113,6 +77,43 @@ zapiere_pembeli_page_start('Dashboard Pembeli', 'dashboard');
         </div>
     </div>
     <?php endif; ?>
+
+    <div>
+        <div class="flex items-center gap-2 mb-4 border-l-4 border-zDark pl-2">
+            <h3 class="font-bold text-zDark text-lg">Kategori Pilihan</h3>
+        </div>
+        <div class="overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div class="flex gap-3 sm:gap-4 w-max">
+                <button
+                    onclick="setCategory(0)"
+                    data-kat="0"
+                    class="kat-btn w-[85px] h-[90px] sm:w-[95px] sm:h-[100px] flex flex-col items-center justify-center gap-2 rounded-2xl border transition-all duration-300 flex-shrink-0 <?= $activeKat === 0 ? 'bg-zBlush/40 border-zDark text-zDark shadow-sm' : 'bg-white border-gray-200 text-zSlate hover:border-zPink hover:text-zDark hover:bg-gray-50' ?>">
+                    <i class="ph-light ph-squares-four text-3xl sm:text-4xl mb-0.5"></i>
+                    <span class="text-[10px] sm:text-xs font-semibold text-center leading-tight tracking-wide">Semua</span>
+                </button>
+                <?php foreach ($kategoriList as $kat): ?>
+                <button
+                    onclick="setCategory(<?= (int)$kat['id_kategori'] ?>)"
+                    data-kat="<?= (int)$kat['id_kategori'] ?>"
+                    class="kat-btn w-[85px] h-[90px] sm:w-[95px] sm:h-[100px] flex flex-col items-center justify-center gap-2 rounded-2xl border transition-all duration-300 flex-shrink-0 <?= $activeKat === (int)$kat['id_kategori'] ? 'bg-zBlush/40 border-zDark text-zDark shadow-sm' : 'bg-white border-gray-200 text-zSlate hover:border-zPink hover:text-zDark hover:bg-gray-50' ?>">
+                    <?php
+                        $katIcons = [
+                            1 => 'ph-laptop',
+                            2 => 'ph-device-mobile',
+                            3 => 'ph-mouse',
+                            4 => 'ph-camera',
+                            5 => 'ph-cooking-pot',
+                        ];
+                        $icon = $katIcons[$kat['id_kategori']] ?? 'ph-tag';
+                    ?>
+                    <i class="ph-light <?= $icon ?> text-3xl sm:text-4xl mb-0.5"></i>
+                    <span class="text-[10px] sm:text-xs font-semibold text-center leading-tight tracking-wide"><?= e($kat['nama']) ?></span>
+                </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
 
     <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>

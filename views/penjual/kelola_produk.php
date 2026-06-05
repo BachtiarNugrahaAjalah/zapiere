@@ -56,10 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_action'])) {
                 $fotoBarang = 'default.png';
             }
             
-            if (add_product($namaBarang, $harga, $stok, $sellerId, $idKategori, $fotoBarang, $deskripsi)) {
-                $_SESSION['toast'] = ['title' => 'Berhasil', 'msg' => 'Produk berhasil ditambahkan.', 'ok' => true];
+            $res = add_product($namaBarang, $harga, $stok, $sellerId, $idKategori, $fotoBarang, $deskripsi);
+            if ($res['success']) {
+                $_SESSION['toast'] = ['title' => 'Berhasil', 'msg' => $res['message'], 'ok' => true];
             } else {
-                $_SESSION['toast'] = ['title' => 'Gagal', 'msg' => 'Gagal menambahkan produk.', 'ok' => false];
+                $_SESSION['toast'] = ['title' => 'Gagal', 'msg' => $res['message'], 'ok' => false];
             }
         }
     }
