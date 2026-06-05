@@ -9,7 +9,7 @@ function products_with_meta(?int $sellerId = null, ?int $limit = null): array
     }
 
     $limitSql = $limit ? 'LIMIT ' . (int) $limit : '';
-    
+
     return db_all("
         SELECT *
         FROM v_produk_lengkap
@@ -29,7 +29,7 @@ function sales_rows(int $sellerId): array
     ");
 }
 
-function product_image_url($foto_barang): string
+function product_image_url(string $foto_barang): string
 {
     $file = trim((string) $foto_barang);
     if ($file === '') {
@@ -43,7 +43,8 @@ function check_stock(int $productId): bool
     return (bool) db_value("SELECT f_cek_stok_tersedia({$productId})");
 }
 
-function get_all_data_produk(?int $sellerId = null) {
+function get_all_data_produk(?int $sellerId = null)
+{
     $where = $sellerId !== null ? "WHERE p.id_user = {$sellerId}" : '';
     return db_all("
         SELECT p.*, u.nama as penjual, k.nama as kategori FROM produk p 
@@ -53,15 +54,17 @@ function get_all_data_produk(?int $sellerId = null) {
     ");
 }
 
-function checkout($idPembeli, $jsonCartData) {
+function checkout(int $idPembeli,string $jsonCartData)
+{
+    /** @var mysqli $conn */
     global $conn;
     $stmt = $conn->prepare("CALL checkout_produk(?, ?)");
     $stmt->bind_param("is", $idPembeli, $jsonCartData);
-    
+
     if (!mysqli_stmt_execute($stmt)) {
         throw new Exception("Gagal mengeksekusi prosedur checkout.");
     }
-    
+
     $res = mysqli_stmt_get_result($stmt);
     if ($res) {
         $row = mysqli_fetch_assoc($res);
@@ -76,15 +79,17 @@ function checkout($idPembeli, $jsonCartData) {
     }
 }
 
-function add_product($nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi) {
+function add_product($nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi)
+{
+    /** @var mysqli $conn */
     global $conn;
     $stmt = $conn->prepare("CALL posting_produk(?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param('siiiiss', $nama_barang, $harga, $stok, $id_penjual, $id_kategori, $foto_barang, $deskripsi);
-    
+
     if (!mysqli_stmt_execute($stmt)) {
         return ['success' => false, 'message' => 'Gagal mengeksekusi prosedur tambah produk.'];
     }
-    
+
     $res = mysqli_stmt_get_result($stmt);
     if ($res) {
         $row = mysqli_fetch_assoc($res);
@@ -99,14 +104,17 @@ function add_product($nama_barang, $harga, $stok, $id_penjual, $id_kategori, $fo
     }
 }
 
-function edit_product($id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi) {
+function edit_product($id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi)
+{
+    /** @var mysqli $conn */
     global $conn;
     $stmt = $conn->prepare("CALL edit_produk(?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param('isiiiss', $id_produk, $nama_barang, $harga, $stok, $id_kategori, $foto_barang, $deskripsi);
     return $stmt->execute();
 }
 
-function get_smart_recommendation() {
+function get_smart_recommendation()
+{
     return db_all("
         SELECT id_produk, nama, harga, foto_barang, '🚨 Sisa Dikit!' AS label_promo 
         FROM produk 

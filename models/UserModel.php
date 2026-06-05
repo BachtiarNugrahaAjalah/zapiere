@@ -59,7 +59,8 @@ function register_user(string $username, string $nama, string $password, string 
     $role = db_escape($role);
 
     $sql = "CALL p_register_user('{$username}', '{$nama}', '{$password}', '{$role}')";
-    
+
+    /** @var mysqli $conn */
     global $conn;
     if (!db_available()) {
         return ['success' => false, 'message' => 'Database tidak tersedia.'];
@@ -83,7 +84,7 @@ function dashboard_url_for_role(string $role): string
     return url_for($map[$role] ?? 'login.php');
 }
 
-function proses_topup($id_user, $nominal) 
+function proses_topup($id_user, $nominal)
 {
     $hasil = db_one("CALL topup_saldo($id_user, $nominal)");
 
@@ -95,7 +96,7 @@ function proses_topup($id_user, $nominal)
     }
 
     return [
-        'success' => false, 
+        'success' => false,
         'message' => 'Gagal terhubung ke database.'
     ];
 }
