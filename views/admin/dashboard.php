@@ -35,47 +35,6 @@ zapiere_page_start('Dashboard Admin', 'admin', 'dashboard', 'Ringkasan operasion
 </section>
 
 <section class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-    <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#545677]">Topologi Distribusi</p>
-                <h2 class="mt-2 text-2xl font-black">Status node penyimpanan</h2>
-            </div>
-            <a href="<?= e(url_for('views/admin/backup_sistem.php')) ?>" class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-[#011C27] transition hover:border-[#EB9FEF] hover:bg-[#FECEE9]/40">
-                <i data-lucide="database-backup" class="h-4 w-4"></i>
-                Backup
-            </a>
-        </div>
-
-        <div class="mt-6 grid gap-4 md:grid-cols-3">
-            <?php foreach ($nodes as $node): ?>
-                <article class="rounded-lg border border-slate-200 p-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <h3 class="font-black"><?= e($node['nama_node']) ?></h3>
-                            <p class="mt-1 text-sm font-medium text-[#545677]"><?= e($node['lokasi']) ?> - <?= e($node['tipe_node']) ?></p>
-                        </div>
-                        <?= status_badge($node['status_node']) ?>
-                    </div>
-                    <div class="mt-5 space-y-3">
-                        <div>
-                            <div class="mb-1 flex justify-between text-xs font-bold text-[#545677]">
-                                <span>Beban</span>
-                                <span><?= e($node['beban_persen']) ?>%</span>
-                            </div>
-                            <div class="h-2 rounded-full bg-slate-100">
-                                <div class="h-2 rounded-full bg-[#EB9FEF]" style="width: <?= e(min(100, (int) $node['beban_persen'])) ?>%"></div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                            <span class="font-semibold text-[#545677]">Latency</span>
-                            <span class="font-black"><?= e($node['latency_ms']) ?> ms</span>
-                        </div>
-                    </div>
-                </article>
-            <?php endforeach; ?>
-        </div>
-    </div>
 
     <div class="rounded-lg border border-slate-200 bg-[#011C27] p-6 text-white shadow-soft">
         <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#FECEE9]">Deadlock Demo</p>
@@ -105,33 +64,6 @@ zapiere_page_start('Dashboard Admin', 'admin', 'dashboard', 'Ringkasan operasion
 </section>
 
 <section class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-    <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
-        <div class="mb-5 flex items-center justify-between gap-3">
-            <div>
-                <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#545677]">Fragmentasi</p>
-                <h2 class="mt-2 text-xl font-black">Pemetaan data ke node</h2>
-            </div>
-            <span class="rounded-full bg-[#FECEE9] px-3 py-1 text-xs font-black text-[#011C27]"><?= count($fragments) ?> fragmen</span>
-        </div>
-
-        <div class="space-y-3">
-            <?php foreach ($fragments as $fragment): ?>
-                <div class="rounded-lg border border-slate-200 p-4">
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                            <h3 class="font-black"><?= e($fragment['nama_fragmen']) ?></h3>
-                            <p class="mt-1 text-sm text-[#545677]"><?= e($fragment['aturan_fragmentasi']) ?></p>
-                        </div>
-                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black capitalize text-[#03254E]"><?= e($fragment['tipe_fragmentasi']) ?></span>
-                    </div>
-                    <div class="mt-3 flex items-center gap-2 text-xs font-bold text-[#545677]">
-                        <i data-lucide="table-2" class="h-4 w-4"></i>
-                        <?= e($fragment['nama_tabel']) ?> di <?= e($fragment['nama_node']) ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
 
     <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
