@@ -92,14 +92,18 @@ function edit_product($id_produk, $nama_barang, $harga, $stok, $id_kategori, $fo
 
 function get_smart_recommendation() {
     return db_all("
-        SELECT id_produk, nama, harga, foto_barang, '🚨 Sisa Dikit!' AS label_promo 
-        FROM produk 
-        WHERE stok <= 5 AND stok > 0
+        SELECT p.*, u.nama as penjual, k.nama as kategori, '🚨 Sisa Dikit!' AS label_promo 
+        FROM produk p
+        INNER JOIN users u ON p.id_user = u.id_user
+        INNER JOIN kategori k ON p.id_kategori = k.id_kategori
+        WHERE p.stok <= 5 AND p.stok > 0
         
         UNION ALL
         
-        SELECT id_produk, nama, harga, foto_barang, '💎 Premium' AS label_promo 
-        FROM produk 
-        WHERE harga >= 15000000
+        SELECT p.*, u.nama as penjual, k.nama as kategori, '💎 Premium' AS label_promo 
+        FROM produk p
+        INNER JOIN users u ON p.id_user = u.id_user
+        INNER JOIN kategori k ON p.id_kategori = k.id_kategori
+        WHERE p.harga >= 15000000
     ");
 }
