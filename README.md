@@ -117,7 +117,7 @@ Data pada tabel view dibatasi menjadi interval 30 hari terakhir agar sistem tida
 <img src="assets/images/deadlock.png">
 <img src="assets/images/deadlock2.png">
 
-ZAPIERE menyediakan dashboard khusus bagi Admin (simulasi_deadlock.php) untuk mensimulasikan situasi Deadlock—yaitu kebuntuan di mana dua atau lebih transaksi saling menunggu satu sama lain untuk melepaskan lock pada baris tabel yang sama.
+ZAPIERE menyediakan dashboard khusus bagi Admin (simulasi_deadlock.php) untuk mensimulasikan situasi Deadlock yaitu kebuntuan di mana dua atau lebih transaksi saling menunggu satu sama lain untuk melepaskan lock pada baris tabel yang sama.
 
 Sistem ini menunjukkan bagaimana manajemen database menangani konflik tersebut dengan menerapkan teknik Lock Ordering dan penanganan error exception untuk memastikan bahwa salah satu transaksi akan di-ROLLBACK dan transaksi lainnya tetap dapat berjalan dengan aman.
 
