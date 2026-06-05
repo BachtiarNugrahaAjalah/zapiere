@@ -7,7 +7,7 @@ Selain menyediakan fitur marketplace seperti pengelolaan produk, keranjang belan
 <img src="assets/images/dashboard.png">
 
 <h1>📌 Detail Konsep</h1>
-Beberapa implementasi **Stored Procedure**, **Function**, **Database View**, **SQL Join & Set Operation**, **Deadlock Simulation**, **Trigger**, **Backup**, dan **Fragmentasi** yang digunakan pada sistem ZAPIERE adalah sebagai berikut:
+Beberapa implementasi Stored Procedure, Function, Database View, SQL Join & Set Operation, Deadlock Simulation, Trigger, Backup, dan Fragmentasi yang digunakan pada sistem ZAPIERE adalah sebagai berikut:
 
 ## 🛍️ checkout_produk - Stored Procedure & Transaction
 <img src="assets/images/tabelProsedur.png">
